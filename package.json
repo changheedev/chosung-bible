@@ -13,13 +13,22 @@
     "precommit": "npm run lint"
   },
   "dependencies": {
-    "nuxt": "^2.0.0"
+    "@nuxtjs/axios": "^5.9.5",
+    "bootstrap-vue": "^2.4.0",
+    "dotenv": "^8.2.0",
+    "hangul-js": "^0.2.6",
+    "mariadb": "^2.2.0",
+    "nuxt": "^2.0.0",
+    "sequelize": "^5.21.4",
+    "trie-search": "^1.2.11"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.1",
     "eslint": "^4.19.1",
     "eslint-friendly-formatter": "^4.0.1",
     "eslint-loader": "^2.1.1",
-    "eslint-plugin-vue": "^4.0.0"
+    "eslint-plugin-vue": "^4.0.0",
+    "node-sass": "^4.13.1",
+    "sass-loader": "^8.0.2"
   }
 }

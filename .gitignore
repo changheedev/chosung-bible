@@ -13,3 +13,6 @@ dist
 # Editor
 .editorconfig
 .eslintrc.js
+
+# Config
+.env
