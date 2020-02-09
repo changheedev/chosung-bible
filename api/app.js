@@ -1,7 +1,8 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
-const router = require("./router/index");
+const router = require("./router");
+const sequelize = require("./sequelize");
 
 //bodyParser 사용설정
 app.use(bodyParser.json()); //json 포맷의 데이터를 사용
