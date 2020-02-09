@@ -1,7 +1,7 @@
 <template>
   <section class="container">
     <div>
-      <app-logo/>
+      <app-logo />
       <h1 class="title">
         chosung-bible
       </h1>
@@ -9,27 +9,34 @@
         초성을 이용한 성경 검색 개발 프로젝트
       </h2>
       <div class="links">
-        <a
-          href="https://nuxtjs.org/"
-          target="_blank"
-          class="button--green">Documentation</a>
+        <a href="https://nuxtjs.org/" target="_blank" class="button--green"
+          >Documentation</a
+        >
         <a
           href="https://github.com/nuxt/nuxt.js"
           target="_blank"
-          class="button--grey">GitHub</a>
+          class="button--grey"
+          >GitHub</a
+        >
       </div>
     </div>
   </section>
 </template>
 
 <script>
-import AppLogo from '~/components/AppLogo.vue'
+import AppLogo from "~/components/AppLogo.vue";
 
 export default {
   components: {
     AppLogo
+  },
+  async fetch({ app }) {
+    const bibleTest = await app.$axios.get("/api/bible/1/1/1");
+    console.log(bibleTest.data);
+    const booksTest = await app.$axios.get("/api/bible/books");
+    console.log(booksTest.data);
   }
-}
+};
 </script>
 
 <style>
@@ -42,7 +49,8 @@ export default {
 }
 
 .title {
-  font-family: "Quicksand", "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; /* 1 */
+  font-family: "Quicksand", "Source Sans Pro", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; /* 1 */
   display: block;
   font-weight: 300;
   font-size: 100px;
@@ -62,4 +70,3 @@ export default {
   padding-top: 15px;
 }
 </style>
-
