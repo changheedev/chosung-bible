@@ -40,6 +40,7 @@ module.exports = {
     }
   },
   modules: ["bootstrap-vue/nuxt", "@nuxtjs/axios"],
+  plugins: ["~/plugins/autocomplete.js"],
   serverMiddleware: [{ path: "/api", handler: "~/api/app.js" }],
   env: env.parsed
 };
