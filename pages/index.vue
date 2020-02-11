@@ -7,6 +7,7 @@
       aria-label="성경 검색"
       @submit="handleSubmit"
     ></autocomplete>
+    <div v-if="searchedData">{{ searchedData.content }}</div>
   </section>
 </template>
 
@@ -21,36 +22,105 @@ export default {
   data() {
     return {
       trie: null,
+      metadata: null,
       searchParam: {
         book: 0,
         chapter: 0,
-        verseFrom: 0,
-        verseTo: 0
-      }
+        verse: 0
+      },
+      searchedData: null
     };
   },
   mounted() {
-    //create trie
-    const chosungMap = this.$store.getters.chosung;
-    this.trie = new TrieSearch("irrelevantForMapMethod");
-    chosungMap.forEach((value, key, mapObject) => this.trie.map(key, value));
+    this.loadMetadata();
+    this.createTrie();
   },
   methods: {
+    loadMetadata() {
+      this.metadata = this.$store.getters.metadata;
+    },
+    createTrie() {
+      const chosungMap = this.$store.getters.chosung;
+      this.trie = new TrieSearch("irrelevantForMapMethod");
+      chosungMap.forEach((value, key, mapObject) => this.trie.map(key, value));
+    },
     search(input) {
       return new Promise(resolve => {
         if (input.length < 1) {
           resolve([]);
         }
-        const result = this.trie.get(input);
+
+        /*
+        입력의 초성과 숫자(장,절) 정보를 분리
+        <to-do>
+        - ctr -> ㅊㅅㄱ 로 매핑 필요
+        */
+        const chosung = input.match(/[ㄱ-ㅎ]+/g);
+        const num = input.match(/\d+/g);
+        const result = this.makeListAutoComplete(chosung, num);
         resolve(result);
       });
     },
+    makeListAutoComplete(chosung, num) {
+      let result = [];
+      const parsedNum = this.parseNum(num);
+
+      this.trie.get(chosung).forEach(book => {
+        parsedNum.forEach(([chapter, verse]) => {
+          const _metadata = this.metadata[book.id - 1];
+          // book(item.id) 의 최대 chapter, 최대 verse 를 벗어나지 않는 경우에만 리스트에 넣는다
+          if (
+            chapter <= _metadata.maxChapter &&
+            verse <= _metadata.maxVerses[chapter - 1].maxVerse
+          ) {
+            result.push({
+              text: `${book.name} ${chapter}장 ${verse}절`,
+              book: book.id,
+              chapter: chapter,
+              verse: verse
+            });
+          }
+        });
+      });
+      return result;
+    },
     getResultValue(result) {
-      return result.name;
+      return result.text;
     },
     handleSubmit(result) {
-      this.searchParam.book = result.id;
-      console.log(this.searchParam.book);
+      this.searchParam.book = result.book;
+      this.searchParam.chapter = result.chapter;
+      this.searchParam.verse = result.verse;
+      this.getBible(this.searchParam);
+    },
+    parseNum(num) {
+      //숫자가 입력되지 않은 경우
+      if (!num) return [[1, 1]];
+
+      let numstr = num.toString();
+      const result = [];
+      //chapter는 최대 3자리 이므로 최대 길이를 3으로 제한한다
+      const maxLen = numstr.length < 3 ? numstr.length : 3;
+
+      for (let lenOfChapter = 1; lenOfChapter <= maxLen; lenOfChapter++) {
+        let chapter = numstr.substring(0, lenOfChapter);
+        // 길이가 3이하인 numstr을 모두 chapter로 자르면 verse가 없게 되므로 1로 설정해준다
+        let verse = numstr.substring(lenOfChapter)
+          ? numstr.substring(lenOfChapter)
+          : "1";
+        result.push([Number(chapter), Number(verse)]);
+      }
+
+      return result;
+    },
+    async getBible(searchParam) {
+      const bible = (
+        await this.$axios.get(
+          `/api/bible/${searchParam.book}/${searchParam.chapter}/${searchParam.verse}`
+        )
+      ).data;
+
+      this.searchedData = bible;
     }
   }
 };
