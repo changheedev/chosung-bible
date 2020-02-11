@@ -55,7 +55,7 @@ export default {
         <to-do>
         - ctr -> ㅊㅅㄱ 로 매핑 필요
         */
-        const chosung = input.match(/[ㄱ-ㅎ]+/g);
+        const chosung = input.match(/[ㄱ-ㅎ]+/g) || input.match(/[a-z]+/g);
         const num = input.match(/\d+/g);
         const result = this.makeListAutoComplete(chosung, num);
         resolve(result);
