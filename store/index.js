@@ -1,4 +1,20 @@
 const Hangul = require("hangul-js");
+const alphabet = new Map([
+  ["ㄱ", "r"],
+  ["ㄴ", "s"],
+  ["ㄷ", "e"],
+  ["ㄹ", "f"],
+  ["ㅁ", "a"],
+  ["ㅂ", "q"],
+  ["ㅅ", "t"],
+  ["ㅇ", "d"],
+  ["ㅈ", "w"],
+  ["ㅊ", "c"],
+  ["ㅋ", "z"],
+  ["ㅌ", "x"],
+  ["ㅍ", "v"],
+  ["ㅎ", "g"]
+]);
 
 export const state = () => {
   return {
@@ -40,10 +56,16 @@ export const actions = {
          */
         const disassembled = Hangul.disassemble(book.name, true);
         let chosung = "";
+        let chosungAlpha = "";
         //추출한 배열의 각 첫 글자를 합친다 => 'ㅊㅅㄱ'
-        disassembled.forEach(word => (chosung += word[0]));
+        disassembled.forEach(word => {
+          chosung += word[0];
+          //영어로 입력되는 경우 처리 'ㅊㅅㄱ' => 'ctr'
+          chosungAlpha += alphabet.get(word[0]);
+        });
         //만들어진 초성을 key 로 하여 map 을 만든다
         chosungMap.set(chosung, { id: book.id, name: book.name });
+        chosungMap.set(chosungAlpha, { id: book.id, name: book.name });
       });
 
       commit("setChosung", chosungMap);
