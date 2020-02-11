@@ -2,19 +2,26 @@ const Hangul = require("hangul-js");
 
 export const state = () => {
   return {
-    chosung: {}
+    chosung: {},
+    metadata: {}
   };
 };
 
 export const mutations = {
   setChosung(state, chosung) {
     state.chosung = chosung;
+  },
+  setMetadata(state, metadata) {
+    state.metadata = metadata;
   }
 };
 
 export const getters = {
   chosung(state) {
     return state.chosung;
+  },
+  metadata(state) {
+    return state.metadata;
   }
 };
 
@@ -39,10 +46,18 @@ export const actions = {
         chosungMap.set(chosung, { id: book.id, name: book.name });
       });
 
-      console.log(chosungMap);
       commit("setChosung", chosungMap);
+      console.log("Create chosung list has been established successfully.");
     } catch (err) {
       console.error("Create chosung list failed", err);
+    }
+
+    try {
+      const bibleMeta = await app.$axios.get("/api/bible/metadata");
+      commit("setMetadata", bibleMeta.data);
+      console.log("Load metadata has been established successfully.");
+    } catch (err) {
+      console.error("Load bible metadata failed", err);
     }
   }
 };
