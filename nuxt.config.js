@@ -40,6 +40,6 @@ module.exports = {
     }
   },
   modules: ["bootstrap-vue/nuxt", "@nuxtjs/axios"],
-  serverMiddleware: [{ path: "/api", handler: "~/api/app.js" }],
+  serverMiddleware: [{ path: "/api", handler: "~/api/server.js" }],
   env: env.parsed
 };
