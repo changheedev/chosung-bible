@@ -1,33 +1,32 @@
-const { Model, DataTypes } = require("sequelize");
-const sequelize = require("..");
+import Sequelize from "sequelize";
 
-class Bible extends Model {}
-Bible.init(
-  {
-    // attributes
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true
-    },
-    book: {
-      type: DataTypes.INTEGER
-    },
-    chapter: {
-      type: DataTypes.INTEGER
-    },
-    verse: {
-      type: DataTypes.INTEGER
-    },
-    content: {
-      type: DataTypes.TEXT
-    }
-  },
-  {
-    sequelize,
-    modelName: "bible",
-    tableName: "tbl_bible",
-    timestamps: false
+export default class Bible extends Sequelize.Model {
+  static init(sequelize) {
+    return super.init(
+      {
+        // attributes
+        id: {
+          type: Sequelize.INTEGER,
+          primaryKey: true
+        },
+        book: {
+          type: Sequelize.INTEGER
+        },
+        chapter: {
+          type: Sequelize.INTEGER
+        },
+        verse: {
+          type: Sequelize.INTEGER
+        },
+        content: {
+          type: Sequelize.TEXT
+        }
+      },
+      {
+        sequelize,
+        modelName: "bible",
+        tableName: "tbl_bible"
+      }
+    );
   }
-);
-
-module.exports = Bible;
+}
