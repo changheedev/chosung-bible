@@ -1,11 +1,9 @@
-const express = require("express");
-const router = express.Router();
-const Bible = require("../sequelize/models/bible");
-const Book = require("../sequelize/models/book");
+import express from "express";
+import { models } from "../sequelize";
 
-router.get("/hello", (req, res) => {
-  res.send("hello");
-});
+const router = express.Router();
+let Bible = models.Bible;
+let Book = models.Book;
 
 router.get("/bible/:book/:chapter/:verse", (req, res) => {
   const book = Number(req.params.book);
@@ -17,7 +15,7 @@ router.get("/bible/:book/:chapter/:verse", (req, res) => {
   })
     .then(bible => res.send(bible))
     .catch(err => {
-      console.log("error", err);
+      console.error("error", err);
     });
 });
 
@@ -25,8 +23,8 @@ router.get("/bible/books", (req, res) => {
   Book.findAll()
     .then(books => res.send(books))
     .catch(err => {
-      console.log("error", err);
+      console.error("error", err);
     });
 });
 
-module.exports = router;
+export default router;
