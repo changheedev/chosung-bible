@@ -18,12 +18,16 @@ const alphabet = new Map([
 
 export const state = () => {
   return {
+    books: [],
     chosung: {},
     metadata: {}
   };
 };
 
 export const mutations = {
+  setBooks(state, books) {
+    state.books = books;
+  },
   setChosung(state, chosung) {
     state.chosung = chosung;
   },
@@ -33,6 +37,9 @@ export const mutations = {
 };
 
 export const getters = {
+  books(state) {
+    return state.books;
+  },
   chosung(state) {
     return state.chosung;
   },
@@ -46,6 +53,8 @@ export const actions = {
     try {
       const booksResponse = await app.$axios.get("/api/bible/books");
       const books = booksResponse.data;
+      commit("setBooks", books);
+
       let chosungMap = new Map();
 
       books.forEach(book => {

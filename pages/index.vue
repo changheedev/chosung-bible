@@ -7,7 +7,33 @@
       aria-label="성경 검색"
       @submit="handleSubmit"
     ></autocomplete>
-    <div v-if="searchedData">{{ searchedData.content }}</div>
+    <div class="view-bible-area mt-3" v-if="isViewBible">
+      <ul class="ul-bible">
+        <li v-for="item in searchedData" :key="'bible_' + item.id">
+          <div class="bible-metadata">
+            {{
+              books[item.book - 1].name +
+                " " +
+                item.chapter +
+                "장 " +
+                item.verse +
+                "절"
+            }}
+          </div>
+          <div class="bible-content shadow-sm rounded p-3">
+            {{ item.content }}
+          </div>
+        </li>
+      </ul>
+      <div class="text-center">
+        <b-button
+          class="btn-more mt-3 px-5"
+          variant="primary"
+          @click="getBibleNextPage()"
+          >더보기</b-button
+        >
+      </div>
+    </div>
   </section>
 </template>
 
@@ -21,15 +47,23 @@ export default {
   },
   data() {
     return {
+      books: [],
       trie: null,
       metadata: null,
       searchParam: {
-        book: 0,
-        chapter: 0,
-        verse: 0
+        book: 1,
+        chapter: 1,
+        verse: 1,
+        page: 0
       },
-      searchedData: null
+      searchedData: []
     };
+  },
+  computed: {
+    isViewBible() {
+      if (this.searchedData.length > 0) return true;
+      return false;
+    }
   },
   mounted() {
     this.loadMetadata();
@@ -37,6 +71,7 @@ export default {
   },
   methods: {
     loadMetadata() {
+      this.books = this.$store.getters.books;
       this.metadata = this.$store.getters.metadata;
     },
     createTrie() {
@@ -88,6 +123,7 @@ export default {
       return result.text;
     },
     handleSubmit(result) {
+      if (!result) return;
       this.searchParam.book = result.book;
       this.searchParam.chapter = result.chapter;
       this.searchParam.verse = result.verse;
@@ -116,11 +152,15 @@ export default {
     async getBible(searchParam) {
       const bible = (
         await this.$axios.get(
-          `/api/bible/${searchParam.book}/${searchParam.chapter}/${searchParam.verse}`
+          `/api/bible/book/${searchParam.book}/chapter/${searchParam.chapter}/verse/${searchParam.verse}?page=${searchParam.page}`
         )
       ).data;
 
-      this.searchedData = bible;
+      this.searchedData = this.searchedData.concat(bible);
+    },
+    getBibleNextPage() {
+      this.searchParam.page = this.searchParam.page + 1;
+      this.getBible(this.searchParam);
     }
   }
 };
@@ -128,8 +168,23 @@ export default {
 
 <style>
 .container {
-  padding-top: 50px;
+  padding: 50px 20px;
   width: 100%;
   min-height: 100vh;
+}
+
+.ul-bible {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ul-bible > li + li {
+  margin-top: 20px;
+}
+
+.bible-metadata {
+  font-size: 0.8rem;
+  margin-left: 3px;
 }
 </style>

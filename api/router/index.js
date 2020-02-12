@@ -1,17 +1,31 @@
 import express from "express";
 import { sequelize, models } from "../sequelize";
+import { Sequelize } from "sequelize";
 
 const router = express.Router();
+
+const Op = Sequelize.Op;
 let Bible = models.Bible;
 let Book = models.Book;
 
-router.get("/bible/:book/:chapter/:verse", (req, res) => {
+router.get("/bible/book/:book/chapter/:chapter/verse/:verse", (req, res) => {
   const book = Number(req.params.book);
   const chapter = Number(req.params.chapter);
   const verse = Number(req.params.verse);
+  const page = Number(req.query.page) || 0;
 
-  Bible.findOne({
-    where: { book: book, chapter: chapter, verse: verse }
+  //사용자가 입력한 성경부터 10개의 데이터를 가져온다
+  //사용자가 입력한 파라미터를 서브쿼리로 이용
+  Bible.findAll({
+    where: {
+      id: {
+        [Op.gte]: sequelize.literal(
+          `(select id from tbl_bible where book = ${book} and chapter = ${chapter} and verse = ${verse})`
+        )
+      }
+    },
+    offset: page * 10,
+    limit: 10
   })
     .then(bible => res.status(200).json(bible))
     .catch(err => {
