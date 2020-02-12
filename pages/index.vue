@@ -1,13 +1,18 @@
 <template>
   <section class="container">
+    <h1 class="title mb-4">초성 바이블</h1>
     <autocomplete
       class="el-autocomplete"
       :search="search"
       :get-result-value="getResultValue"
-      placeholder="성경 검색"
-      aria-label="성경 검색"
+      placeholder="Search bible"
+      aria-label="Search bible"
       @submit="handleSubmit"
     ></autocomplete>
+    <div class="area-description mt-5">
+      <p>초성과 숫자로 간편하게 성경을 검색해보세요.</p>
+      <p>입력예시 : ㅊㅅㄱ123, ctr123</p>
+    </div>
   </section>
 </template>
 
@@ -26,6 +31,7 @@ export default {
     };
   },
   mounted() {
+    console.log(process.env.BASE_URL);
     this.loadMetadata();
     this.createTrie();
   },
@@ -113,16 +119,42 @@ export default {
 
 <style scoped>
 .container {
-  padding: 50px 20px;
+  padding: 0 20px;
   width: 100%;
   max-width: 700px;
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+}
+
+.title {
+  padding-top: 200px;
+  font-size: 1.7rem;
+  text-align: center;
 }
 
 .el-autocomplete {
-  width: 80%;
+  position: relative;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.el-autocomplete::before {
+  font-size: 0.7rem;
+  bottom: -20px;
+  right: 5px;
+  color: #555;
+  position: absolute;
+  content: "DB - 개역한글성경";
+}
+
+.area-description {
+  text-align: center;
+  font-size: 1rem;
+  color: #555;
+}
+
+@media (max-width: 480px) {
+  .title {
+    padding-top: 100px;
+  }
 }
 </style>
