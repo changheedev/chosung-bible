@@ -51,5 +51,11 @@ module.exports = {
   modules: ["bootstrap-vue/nuxt", "@nuxtjs/axios"],
   plugins: ["~/plugins/autocomplete.js"],
   serverMiddleware: [{ path: "/api", handler: "~/api/server.js" }],
+  axios: {
+    proxy: true
+  },
+  proxy: {
+    "/api/": process.env.BASE_URL
+  },
   env: env.parsed
 };
