@@ -1,39 +1,13 @@
 <template>
   <section class="container">
     <autocomplete
+      class="el-autocomplete"
       :search="search"
       :get-result-value="getResultValue"
       placeholder="성경 검색"
       aria-label="성경 검색"
       @submit="handleSubmit"
     ></autocomplete>
-    <div class="view-bible-area mt-3" v-if="isViewBible">
-      <ul class="ul-bible">
-        <li v-for="item in searchedData" :key="'bible_' + item.id">
-          <div class="bible-metadata">
-            {{
-              books[item.book - 1].name +
-                " " +
-                item.chapter +
-                "장 " +
-                item.verse +
-                "절"
-            }}
-          </div>
-          <div class="bible-content shadow-sm rounded p-3">
-            {{ item.content }}
-          </div>
-        </li>
-      </ul>
-      <div class="text-center">
-        <b-button
-          class="btn-more mt-3 px-5"
-          variant="primary"
-          @click="getBibleNextPage()"
-          >더보기</b-button
-        >
-      </div>
-    </div>
   </section>
 </template>
 
@@ -47,23 +21,9 @@ export default {
   },
   data() {
     return {
-      books: [],
       trie: null,
-      metadata: null,
-      searchParam: {
-        book: 1,
-        chapter: 1,
-        verse: 1,
-        page: 0
-      },
-      searchedData: []
+      metadata: null
     };
-  },
-  computed: {
-    isViewBible() {
-      if (this.searchedData.length > 0) return true;
-      return false;
-    }
   },
   mounted() {
     this.loadMetadata();
@@ -71,7 +31,6 @@ export default {
   },
   methods: {
     loadMetadata() {
-      this.books = this.$store.getters.books;
       this.metadata = this.$store.getters.metadata;
     },
     createTrie() {
@@ -124,10 +83,9 @@ export default {
     },
     handleSubmit(result) {
       if (!result) return;
-      this.searchParam.book = result.book;
-      this.searchParam.chapter = result.chapter;
-      this.searchParam.verse = result.verse;
-      this.getBible(this.searchParam);
+      this.$router.push(
+        `/search?book=${result.book}&chapter=${result.chapter}&verse=${result.verse}`
+      );
     },
     parseNum(num) {
       //숫자가 입력되지 않은 경우
@@ -148,43 +106,23 @@ export default {
       }
 
       return result;
-    },
-    async getBible(searchParam) {
-      const bible = (
-        await this.$axios.get(
-          `/api/bible/book/${searchParam.book}/chapter/${searchParam.chapter}/verse/${searchParam.verse}?page=${searchParam.page}`
-        )
-      ).data;
-
-      this.searchedData = this.searchedData.concat(bible);
-    },
-    getBibleNextPage() {
-      this.searchParam.page = this.searchParam.page + 1;
-      this.getBible(this.searchParam);
     }
   }
 };
 </script>
 
-<style>
+<style scoped>
 .container {
   padding: 50px 20px;
   width: 100%;
+  max-width: 700px;
   min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.ul-bible {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.ul-bible > li + li {
-  margin-top: 20px;
-}
-
-.bible-metadata {
-  font-size: 0.8rem;
-  margin-left: 3px;
+.el-autocomplete {
+  width: 80%;
 }
 </style>
