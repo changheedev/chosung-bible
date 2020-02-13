@@ -5,7 +5,7 @@ module.exports = {
    ** Headers of the page
    */
   head: {
-    title: "초성바이블 - 초성과 숫자로 간편하게 성경검색",
+    title: "초성바이블 - 초성과 숫자로 간편한 성경검색",
     meta: [
       { charset: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -25,6 +25,7 @@ module.exports = {
     ],
     link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }]
   },
+  css: ["~/assets/style.css"],
   /*
    ** Customize the progress bar color
    */
