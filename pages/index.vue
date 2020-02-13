@@ -8,6 +8,7 @@
           class="el-autocomplete"
           :search="search"
           :get-result-value="getResultValue"
+          :autoSelect="true"
           placeholder="ㅊㅅㄱ123, ctr123"
           aria-label="Search bible"
           @submit="handleSubmit"
