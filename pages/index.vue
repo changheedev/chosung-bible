@@ -46,54 +46,33 @@ export default {
       this.trie = new TrieSearch("irrelevantForMapMethod");
       chosungMap.forEach((value, key, mapObject) => this.trie.map(key, value));
     },
-    search(input) {
-      return new Promise(resolve => {
-        if (input.length < 1) {
-          resolve([]);
-        }
+    /* 입력의 초성과 숫자(장,절) 정보를 분리 */
+    parseInput(input) {
+      const suffixNum = input.match(/\d+$/g);
 
-        /*
-        입력의 초성과 숫자(장,절) 정보를 분리
-        <to-do>
-        - ctr -> ㅊㅅㄱ 로 매핑 필요
-        */
-        const chosung = input.match(/[ㄱ-ㅎ]+/g) || input.match(/[a-z]+/g);
-        const num = input.match(/\d+/g);
-        const result = this.makeListAutoComplete(chosung, num);
-        resolve(result);
-      });
-    },
-    makeListAutoComplete(chosung, num) {
-      let result = [];
-      const parsedNum = this.parseNum(num);
+      let chosung = [];
+      let num = [];
 
-      this.trie.get(chosung).forEach(book => {
-        parsedNum.forEach(([chapter, verse]) => {
-          const _metadata = this.metadata[book.id - 1];
-          // book(item.id) 의 최대 chapter, 최대 verse 를 벗어나지 않는 경우에만 리스트에 넣는다
-          if (
-            chapter <= _metadata.maxChapter &&
-            verse <= _metadata.maxVerses[chapter - 1].maxVerse
-          ) {
-            result.push({
-              text: `${book.name} ${chapter}장 ${verse}절`,
-              book: book.id,
-              chapter: chapter,
-              verse: verse
-            });
-          }
-        });
-      });
-      return result;
-    },
-    getResultValue(result) {
-      return result.text;
-    },
-    handleSubmit(result) {
-      if (!result) return;
-      this.$router.push(
-        `/search?book=${result.book}&chapter=${result.chapter}&verse=${result.verse}`
-      );
+      //input의 suffix가 숫자인 경우 2가지 경우의 결과를 합쳐서 반환
+      if (suffixNum) {
+        //suffix 숫자를 모두 장,절 정보로 사용
+        num.push(suffixNum[0]);
+        chosung.push(input.substring(0, input.length - suffixNum[0].length));
+        //suffix의 첫 숫자를 초성으로 사용 => 요한1서, 요한2서... 등의 처리를 위함
+        num.push(suffixNum[0].substring(1));
+        chosung.push(
+          input.substring(0, input.length - suffixNum[0].substring(1).length)
+        );
+      }
+      //input의 suffix가 숫자가 아닌 경우
+      else {
+        chosung.push(input);
+        num.push(null);
+      }
+      return {
+        chosung: chosung,
+        num: num
+      };
     },
     parseNum(num) {
       //숫자가 입력되지 않은 경우
@@ -114,6 +93,65 @@ export default {
       }
 
       return result;
+    },
+    makeAutoCompleteList(chosung, num) {
+      let result = [];
+      const parsedNum = this.parseNum(num);
+
+      this.trie.get(chosung).forEach(book => {
+        parsedNum.forEach(([chapter, verse]) => {
+          const _metadata = this.metadata[book.id - 1];
+          // book(item.id) 의 최대 chapter, 최대 verse 를 벗어나지 않는 경우에만 리스트에 넣는다
+          // 0인 경우 처리 추가
+          if (
+            chapter > 0 &&
+            chapter <= _metadata.maxChapter &&
+            verse > 0 &&
+            verse <= _metadata.maxVerses[chapter - 1].maxVerse
+          ) {
+            result.push({
+              text: `${book.name} ${chapter}장 ${verse}절`,
+              book: book.id,
+              chapter: chapter,
+              verse: verse
+            });
+          }
+        });
+      });
+      return result;
+    },
+    search(input) {
+      return new Promise(resolve => {
+        if (input.length < 1) {
+          resolve([]);
+        }
+
+        const parsedInput = this.parseInput(input);
+        const parsedChosung = parsedInput.chosung;
+        const parsedNum = parsedInput.num;
+
+        console.log(parsedInput);
+
+        let result = [];
+
+        for (let i = 0; i < parsedChosung.length; i++) {
+          result = result.concat(
+            this.makeAutoCompleteList(parsedChosung[i], parsedNum[i])
+          );
+        }
+
+        resolve(result);
+      });
+    },
+
+    getResultValue(result) {
+      return result.text;
+    },
+    handleSubmit(result) {
+      if (!result) return;
+      this.$router.push(
+        `/search?book=${result.book}&chapter=${result.chapter}&verse=${result.verse}`
+      );
     }
   }
 };
