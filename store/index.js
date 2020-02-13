@@ -66,11 +66,15 @@ export const actions = {
         const disassembled = Hangul.disassemble(book.name, true);
         let chosung = "";
         let chosungAlpha = "";
-        //추출한 배열의 각 첫 글자를 합친다 => 'ㅊㅅㄱ'
+
         disassembled.forEach(word => {
+          //추출한 배열의 각 첫 글자를 합친다 => 'ㅊㅅㄱ'
           chosung += word[0];
-          //영어로 입력되는 경우 처리 'ㅊㅅㄱ' => 'ctr'
-          chosungAlpha += alphabet.get(word[0]);
+          /**
+           * 영어로 입력되는 경우를 위한 처리 'ㅊㅅㄱ' => 'ctr'
+           * 숫자가 아닌 경우에만 알파벳으로 변환한다
+           */
+          chosungAlpha += isNaN(word[0]) ? alphabet.get(word[0]) : word[0];
         });
         //만들어진 초성을 key 로 하여 map 을 만든다
         chosungMap.set(chosung, { id: book.id, name: book.name });
