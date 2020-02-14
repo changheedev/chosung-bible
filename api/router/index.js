@@ -1,7 +1,7 @@
 import express from "express";
 import { sequelize, models } from "../database/sequelize";
 import { Sequelize } from "sequelize";
-import { connection } from "../database/mongodb";
+import LogUtils from "../util/log-utils";
 
 const router = express.Router();
 
@@ -10,30 +10,37 @@ const Op = Sequelize.Op;
 let Bible = models.Bible;
 let Book = models.Book;
 
-router.get("/bible/book/:book/chapter/:chapter/verse/:verse", (req, res) => {
-  const book = Number(req.params.book);
-  const chapter = Number(req.params.chapter);
-  const verse = Number(req.params.verse);
-  const page = Number(req.query.page) || 0;
+router.get(
+  "/bible/book/:book/chapter/:chapter/verse/:verse",
+  async (req, res) => {
+    const book = Number(req.params.book);
+    const chapter = Number(req.params.chapter);
+    const verse = Number(req.params.verse);
+    const page = Number(req.query.page) || 0;
 
-  //사용자가 입력한 성경부터 10개의 데이터를 가져온다
-  //사용자가 입력한 파라미터를 서브쿼리로 이용
-  Bible.findAll({
-    where: {
-      id: {
-        [Op.gte]: sequelize.literal(
-          `(select id from tbl_bible where book = ${book} and chapter = ${chapter} and verse = ${verse})`
-        )
-      }
-    },
-    offset: page * 10,
-    limit: 10
-  })
-    .then(bible => res.status(200).json(bible))
-    .catch(err => {
-      console.error("error", err);
-    });
-});
+    //사용자가 입력한 성경부터 10개의 데이터를 가져온다
+    //사용자가 입력한 파라미터를 서브쿼리로 이용
+    await Bible.findAll({
+      where: {
+        id: {
+          [Op.gte]: sequelize.literal(
+            `(select id from tbl_bible where book = ${book} and chapter = ${chapter} and verse = ${verse})`
+          )
+        }
+      },
+      offset: page * 10,
+      limit: 10
+    })
+      .then(bible => {
+        LogUtils.insertLog(req.useragent, req.url, true);
+        res.status(200).json(bible);
+      })
+      .catch(err => {
+        LogUtils.insertLog(req.useragent, req.url, false);
+        console.error("error", err);
+      });
+  }
+);
 
 /*성경리스트('창세기', '출애굽기',...)를 불러온다*/
 router.get("/bible/books", (req, res) => {

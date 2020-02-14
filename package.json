@@ -18,6 +18,7 @@
     "@trevoreyre/autocomplete-vue": "^2.1.0",
     "bootstrap-vue": "^2.4.0",
     "dotenv": "^8.2.0",
+    "express-useragent": "^1.0.13",
     "hangul-js": "^0.2.6",
     "mariadb": "^2.2.0",
     "mongoose": "^5.8.12",
