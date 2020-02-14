@@ -1,9 +1,11 @@
 import express from "express";
-import { sequelize, models } from "../sequelize";
+import { sequelize, models } from "../database/sequelize";
 import { Sequelize } from "sequelize";
+import { connection } from "../database/mongodb";
 
 const router = express.Router();
 
+/* sequelize, mariadb */
 const Op = Sequelize.Op;
 let Bible = models.Bible;
 let Book = models.Book;

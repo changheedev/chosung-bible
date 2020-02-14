@@ -54,7 +54,7 @@ class Database {
       })
       .catch(err => {
         console.log("==============================================");
-        console.error("Unable to connect to the database:", err);
+        console.log("Unable to connect to the database:");
         console.log("==============================================");
       });
   }

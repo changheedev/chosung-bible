@@ -5,7 +5,7 @@
   "author": "Changehee Choi <changhee.dev@gmail.com>",
   "private": true,
   "scripts": {
-    "dev": "nuxt",
+    "dev": "HOST=0.0.0.0 nuxt",
     "build": "nuxt build",
     "start": "nuxt start",
     "generate": "nuxt generate",
@@ -20,6 +20,7 @@
     "dotenv": "^8.2.0",
     "hangul-js": "^0.2.6",
     "mariadb": "^2.2.0",
+    "mongoose": "^5.8.12",
     "nuxt": "^2.0.0",
     "sequelize": "^5.21.4",
     "trie-search": "^1.2.11"
