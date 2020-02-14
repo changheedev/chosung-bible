@@ -56,16 +56,16 @@ export default {
 
       //input의 suffix가 숫자인 경우 2가지 경우의 결과를 합쳐서 반환
       if (suffixNum) {
-        //suffix 숫자를 모두 장,절 정보로 사용
-        num.push(suffixNum[0]);
-        chosung.push(input.substring(0, input.length - suffixNum[0].length));
-        //suffix의 첫 숫자를 초성으로 사용 => 요한1서, 요한2서... 등의 처리를 위함
+        //case1: suffix의 첫 숫자를 초성으로 사용 => 요한1서, 요한2서... 등의 처리를 위함
         num.push(suffixNum[0].substring(1));
         chosung.push(
           input.substring(0, input.length - suffixNum[0].substring(1).length)
         );
+        //case2: suffix 숫자를 모두 장,절 정보로 사용
+        num.push(suffixNum[0]);
+        chosung.push(input.substring(0, input.length - suffixNum[0].length));
       }
-      //input의 suffix가 숫자가 아닌 경우
+      //case3: input의 suffix가 숫자가 아닌 경우
       else {
         chosung.push(input);
         num.push(null);
