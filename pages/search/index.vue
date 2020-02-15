@@ -1,30 +1,13 @@
 <template>
   <section class="container">
-    <b-navbar fixed="top" variant="dark" type="dark">
+    <b-navbar fixed="top" variant="light" type="light" class="shadow-sm">
       <b-navbar-brand to="/"><i class="arrow left"></i></b-navbar-brand>
     </b-navbar>
-    <h1 class="title mt-3">
-      {{
-        books[searchParam.book - 1].name +
-          " " +
-          searchParam.chapter +
-          "장 " +
-          searchParam.verse +
-          "절 검색결과"
-      }}
-    </h1>
     <div class="view-bible-area mt-3" v-if="isViewBible">
       <ul class="ul-bible">
         <li v-for="item in searchedData" :key="'bible_' + item.id">
           <div class="bible-metadata">
-            {{
-              books[item.book - 1].name +
-                " " +
-                item.chapter +
-                "장 " +
-                item.verse +
-                "절"
-            }}
+            {{ makeMetadataText(item) }}
           </div>
           <div class="bible-content shadow-sm rounded p-3">
             {{ item.content }}
@@ -88,6 +71,11 @@ export default {
     getBibleNextPage() {
       this.searchParam.page = this.searchParam.page + 1;
       this.getBible(this.searchParam);
+    },
+    makeMetadataText(item) {
+      return `${this.books[item.book - 1].name} ${item.chapter}${
+        item.book === 19 ? "편" : "장"
+      } ${item.verse}절`;
     }
   }
 };
@@ -95,10 +83,11 @@ export default {
 
 <style scoped>
 i {
-  border: solid #fff;
+  border: solid #555;
   border-width: 0 3px 3px 0;
   display: inline-block;
-  padding: 5px;
+  padding: 6px;
+  margin-left: 3px;
 }
 
 .left {
@@ -130,5 +119,6 @@ i {
 .bible-metadata {
   font-size: 0.8rem;
   margin-left: 3px;
+  color: #999;
 }
 </style>

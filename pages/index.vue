@@ -3,7 +3,7 @@
     <b-row align-v="center">
       <b-col cols="12">
         <h1 class="title">Chosung Bible</h1>
-        <p class="subtitle mb-4">초성과 숫자로 간편하게 성경을 검색해보세요</p>
+        <p class="subtitle mb-5">초성과 숫자로 간편하게 성경을 검색해보세요</p>
         <autocomplete
           class="el-autocomplete"
           :search="search"
@@ -15,12 +15,9 @@
         >
         </autocomplete>
         <div class="area-review">
-          <p>
-            소중한 의견을 보내주시면 다음 업데이트에 반영하도록 하겠습니다 :)
-          </p>
-
-          <b-button v-b-modal.modal-review>의견남기기</b-button>
-
+          <b-button variant="primary" v-b-modal.modal-review
+            >의견남기기</b-button
+          >
           <b-modal
             id="modal-review"
             title="의견남기기"
@@ -30,6 +27,9 @@
             @show="resetModal"
             @hidden="resetModal"
           >
+            <p>
+              소중한 의견을 보내주시면 다음 업데이트에 반영하도록 하겠습니다 :)
+            </p>
             <form ref="form" @submit.prevent="handleReviewSubmit">
               <b-form-textarea
                 id="textarea-review"
@@ -142,7 +142,9 @@ export default {
             verse <= _metadata.maxVerses[chapter - 1].maxVerse
           ) {
             result.push({
-              text: `${book.name} ${chapter}장 ${verse}절`,
+              text: `${book.name} ${chapter}${
+                book.id === 19 ? "편" : "장"
+              } ${verse}절`,
               book: book.id,
               chapter: chapter,
               verse: verse
@@ -188,7 +190,7 @@ export default {
     },
     handleOk(bvModalEvt) {
       if (!this.review) {
-        alert("의견이 입력되지 않았습니다");
+        alert("내용이 입력되지 않았습니다");
         //prevent close
         bvModalEvt.preventDefault();
         return;
@@ -217,7 +219,7 @@ export default {
   max-width: 700px;
 }
 .container .row {
-  min-height: 100vh;
+  min-height: calc(100vh - 59px);
 }
 
 .title {
@@ -243,7 +245,7 @@ export default {
 
 .el-autocomplete::before {
   font-size: 0.7rem;
-  bottom: -20px;
+  top: -20px;
   right: 5px;
   color: #555;
   position: absolute;
@@ -253,8 +255,8 @@ export default {
 .area-review {
   max-width: 500px;
   margin: 0 auto;
-  padding: 120px 0 20px;
-  text-align: center;
+  padding: 20px 0 20px;
+  text-align: right;
   color: #555;
   font-size: 0.9rem;
 }
