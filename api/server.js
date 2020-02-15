@@ -5,23 +5,31 @@ import useragent from "express-useragent";
 
 class Server {
   constructor() {
-    this._express = express();
-    this.middleware();
+    try {
+      this._app = express();
+      this.middleware();
+    } catch (err) {
+      console.error("Server init failed.", err);
+    }
   }
 
   middleware() {
     //bodyParser 사용설정
-    this._express.use(bodyParser.json()); //json 포맷의 데이터를 사용
-    this._express.use(bodyParser.urlencoded({ extended: true })); //인코딩 된 데이터 사용
+    this._app.use(bodyParser.json()); //json 포맷의 데이터를 사용
+    this._app.use(bodyParser.urlencoded({ extended: true })); //인코딩 된 데이터 사용
+
     //useragent parser
-    this._express.use(useragent.express());
+    this._app.use(useragent.express());
+
     //router 설정
-    this._express.use(router);
+    this._app.use(router);
   }
 
-  get express() {
-    return this._express;
+  get app() {
+    return this._app;
   }
 }
 
-export default new Server().express;
+const server = new Server();
+
+export default server.app;
