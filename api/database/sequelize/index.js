@@ -40,10 +40,6 @@ class Database {
 
     this._models = models;
 
-    console.log("================ Models ===================");
-    console.log(this._models);
-    console.log("==============================================");
-
     //db con test
     this._sequelize
       .authenticate()
