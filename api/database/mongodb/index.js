@@ -45,7 +45,7 @@ class MongoDB {
 
 const database = new MongoDB();
 
-export const mongoDB = {
+export default {
   connection: database.mongoose,
   models: database.models
 };

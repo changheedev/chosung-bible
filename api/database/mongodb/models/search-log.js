@@ -1,7 +1,7 @@
-export default class Log {
+export default class SearchLog {
   constructor() {}
   static init(mongoose) {
-    return mongoose.model("Log", {
+    return mongoose.model("SearchLog", {
       useragent: {
         isMobile: Boolean,
         isTablet: Boolean,
@@ -13,7 +13,6 @@ export default class Log {
         platform: String
       },
       query: String,
-      state: Boolean,
       date: Date
     });
   }

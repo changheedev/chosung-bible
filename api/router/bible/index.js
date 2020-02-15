@@ -1,7 +1,7 @@
 import express from "express";
 import { sequelize, models } from "../../database/sequelize";
 import { Sequelize } from "sequelize";
-import LogUtils from "../../util/log-utils";
+import LogQueue from "../../util/log-queue";
 
 const router = express.Router();
 
@@ -10,64 +10,63 @@ const Op = Sequelize.Op;
 let Bible = models.Bible;
 let Book = models.Book;
 
-router.get("/book/:book/chapter/:chapter/verse/:verse", async (req, res) => {
-  const book = Number(req.params.book);
-  const chapter = Number(req.params.chapter);
-  const verse = Number(req.params.verse);
-  const page = Number(req.query.page) || 0;
+router.get(
+  "/book/:book/chapter/:chapter/verse/:verse",
+  async (req, res, next) => {
+    try {
+      const book = Number(req.params.book);
+      const chapter = Number(req.params.chapter);
+      const verse = Number(req.params.verse);
+      const page = Number(req.query.page) || 0;
 
-  //사용자가 입력한 성경부터 10개의 데이터를 가져온다
-  //사용자가 입력한 파라미터를 서브쿼리로 이용
-  await Bible.findAll({
-    where: {
-      id: {
-        [Op.gte]: sequelize.literal(
-          `(select id from tbl_bible where book = ${book} and chapter = ${chapter} and verse = ${verse})`
-        )
-      }
-    },
-    offset: page * 10,
-    limit: 10
-  })
-    .then(bible => {
-      LogUtils.insertLog(req.useragent, req.url, true);
-      res.status(200).json(bible);
-    })
-    .catch(err => {
-      LogUtils.insertLog(req.useragent, req.url, false);
-      console.error("error", err);
-    });
-});
+      //사용자가 입력한 성경부터 10개의 데이터를 가져온다
+      //사용자가 입력한 파라미터를 서브쿼리로 이용
+      const result = await Bible.findAll({
+        where: {
+          id: {
+            [Op.gte]: sequelize.literal(
+              `(select id from tbl_bible where book = ${book} and chapter = ${chapter} and verse = ${verse})`
+            )
+          }
+        },
+        offset: page * 10,
+        limit: 10
+      });
+      LogQueue.insertLog(req.useragent, req.url);
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 /*성경리스트('창세기', '출애굽기',...)를 불러온다*/
-router.get("/books", (req, res) => {
-  Book.findAll()
-    .then(books => res.status(200).json(books))
-    .catch(err => {
-      console.error("error", err);
-    });
+router.get("/books", async (req, res, next) => {
+  try {
+    const result = await Book.findAll();
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
 });
 
 /* 성경별로 장마다 몇절까지 있는지의 데이터를 가져온다 */
-router.get("/metadata", async (req, res) => {
-  // {book, maxChapter}
-  const metaMaxChapters = (
-    await sequelize.query(
+router.get("/metadata", async (req, res, next) => {
+  try {
+    // {book, maxChapter}
+    const metaMaxChapters = await sequelize.query(
       "select book, max(chapter) as maxChapter from tbl_bible group by book"
-    )
-  )[0];
+    );
 
-  // {book, chapter, maxVerse}
-  const metaMaxVerses = (
-    await sequelize.query(
+    // {book, chapter, maxVerse}
+    const metaMaxVerses = await sequelize.query(
       "select book, chapter, count(verse) as maxVerse from tbl_bible group by book, chapter"
-    )
-  )[0];
+    );
 
-  let resResult = [];
+    let resResult = [];
 
-  metaMaxChapters.forEach(_metaMaxChapter => {
-    /*
+    metaMaxChapters[0].forEach(_metaMaxChapter => {
+      /*
     [
       {
         book: 1, 
@@ -83,16 +82,19 @@ router.get("/metadata", async (req, res) => {
       }
     ]
     */
-    resResult.push({
-      book: _metaMaxChapter.book,
-      maxChapter: _metaMaxChapter.maxChapter,
-      maxVerses: metaMaxVerses.filter(
-        _metaMaxVerse => _metaMaxVerse.book === _metaMaxChapter.book
-      )
+      resResult.push({
+        book: _metaMaxChapter.book,
+        maxChapter: _metaMaxChapter.maxChapter,
+        maxVerses: metaMaxVerses[0].filter(
+          _metaMaxVerse => _metaMaxVerse.book === _metaMaxChapter.book
+        )
+      });
     });
-  });
 
-  res.status(200).json(resResult);
+    res.status(200).json(resResult);
+  } catch (err) {
+    next(err);
+  }
 });
 
 export default router;

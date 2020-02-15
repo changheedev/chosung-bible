@@ -1,9 +1,9 @@
-import { mongoDB } from "../database/mongodb";
+import MongoDB from "../database/mongodb";
 import Queue from "./queue";
 
-class LogUtils {
+class LogQueue {
   constructor() {
-    this.Log = mongoDB.models.Log;
+    this.Log = MongoDB.models.SearchLog;
     //큐에 쌓인 로그를 주기적으로 db에 저장
     const timer = setInterval(() => {
       if (Queue.isEmpty()) return;
@@ -17,7 +17,7 @@ class LogUtils {
     }, process.env.LOG_INTERVAL);
   }
 
-  insertLog(ua, query, state) {
+  insertLog(ua, query) {
     Queue.enqueue({
       useragent: {
         isMobile: ua.isMobile,
@@ -30,10 +30,9 @@ class LogUtils {
         platform: ua.platform
       },
       query: query,
-      state: state,
       date: Date.now()
     });
   }
 }
 
-export default new LogUtils();
+export default new LogQueue();
