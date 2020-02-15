@@ -5,18 +5,27 @@ module.exports = {
    ** Headers of the page
    */
   head: {
-    title: "chosung-bible",
+    title: "초성바이블 - 초성과 숫자로 간편한 성경검색",
     meta: [
       { charset: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       {
         hid: "description",
         name: "description",
-        content: "초성을 이용한 성경 검색 개발 프로젝트"
-      }
+        content: "초성과 숫자로 간편하게 성경을 검색해보세요."
+      },
+      { name: "og:type", content: "website" },
+      { name: "og:title", content: "초성바이블" },
+      {
+        name: "og:description",
+        content: "초성과 숫자로 간편하게 성경을 검색해보세요."
+      },
+      { name: "og:image", content: "/ogImage.png" },
+      { name: "og:url", content: "http://chosungbible.com" }
     ],
     link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }]
   },
+  css: ["~/assets/style.css"],
   /*
    ** Customize the progress bar color
    */
@@ -40,5 +49,13 @@ module.exports = {
     }
   },
   modules: ["bootstrap-vue/nuxt", "@nuxtjs/axios"],
+  plugins: ["~/plugins/autocomplete.js", "~/plugins/axios.js"],
+  serverMiddleware: [{ path: "/api", handler: "~/api/server.js" }],
+  axios: {
+    proxy: true
+  },
+  proxy: {
+    "/api/": process.env.BASE_URL
+  },
   env: env.parsed
 };
