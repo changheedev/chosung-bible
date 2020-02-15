@@ -11,9 +11,36 @@
           :autoSelect="true"
           placeholder="ㅊㅅㄱ123, ctr123"
           aria-label="Search bible"
-          @submit="handleSubmit"
+          @submit="handleAutocompleteSubmit"
         >
         </autocomplete>
+        <div class="area-review">
+          <p>
+            불편한 점이나 추가했으면 하는 기능 등 자유로운 의견을 보내주시면
+            다음 업데이트에 반영하도록 하겠습니다 :)
+          </p>
+
+          <b-button v-b-modal.modal-review>의견남기기</b-button>
+
+          <b-modal
+            id="modal-review"
+            title="의견남기기"
+            ok-title="전송"
+            cancel-title="취소"
+            @ok="handleOk"
+            @show="resetModal"
+            @hidden="resetModal"
+          >
+            <form ref="form" @submit.prevent="handleReviewSubmit">
+              <b-form-textarea
+                id="textarea-review"
+                v-model="review"
+                rows="3"
+                max-rows="6"
+              ></b-form-textarea>
+            </form>
+          </b-modal>
+        </div>
       </b-col>
       <b-col cols="12" class="dummy"></b-col>
     </b-row>
@@ -31,7 +58,8 @@ export default {
   data() {
     return {
       trie: null,
-      metadata: null
+      metadata: null,
+      review: ""
     };
   },
   mounted() {
@@ -148,11 +176,28 @@ export default {
     getResultValue(result) {
       return result.text;
     },
-    handleSubmit(result) {
+    handleAutocompleteSubmit(result) {
       if (!result) return;
       this.$router.push(
         `/search?book=${result.book}&chapter=${result.chapter}&verse=${result.verse}`
       );
+    },
+    resetModal() {
+      this.review = "";
+    },
+    handleOk(bvModalEvt) {
+      // Trigger submit handler
+      this.handleReviewSubmit();
+    },
+    handleReviewSubmit() {
+      this.$axios
+        .post("/api/reviews", { content: this.review })
+        .then(res => {
+          alert(res.data);
+        })
+        .catch(err => {
+          alert(err);
+        });
     }
   }
 };
@@ -196,6 +241,15 @@ export default {
   color: #555;
   position: absolute;
   content: "DB - 개역한글성경";
+}
+
+.area-review {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 120px 0 20px;
+  text-align: center;
+  color: #555;
+  font-size: 0.9rem;
 }
 
 @media (max-width: 340px) {

@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
 
 class MongoDB {
   constructor() {
@@ -19,23 +21,17 @@ class MongoDB {
     });
 
     //create Log model
-    this._models = {
-      Log: this._mongoose.model("Log", {
-        useragent: {
-          isMobile: Boolean,
-          isTablet: Boolean,
-          isDesktop: Boolean,
-          isBot: Boolean,
-          browser: String,
-          version: String,
-          os: String,
-          platform: String
-        },
-        query: String,
-        state: Boolean,
-        date: Date
+    this._models = Object.assign(
+      {},
+      ...fs.readdirSync(path.join(__dirname, "/models")).map(file => {
+        const model = require(path.join(path.join(__dirname, "/models"), file))
+          .default;
+
+        return {
+          [model.name]: model.init(this._mongoose)
+        };
       })
-    };
+    );
   }
 
   get mongoose() {
