@@ -62,8 +62,12 @@ export default {
     };
   },
   mounted() {
-    this.loadMetadata();
-    this.createTrie();
+    try {
+      this.loadMetadata();
+      this.createTrie();
+    } catch (err) {
+      throw new Error("초기 데이터를 로드하는데 실패했습니다.");
+    }
   },
   methods: {
     loadMetadata() {
@@ -158,8 +162,6 @@ export default {
         const parsedChosung = parsedInput.chosung;
         const parsedNum = parsedInput.num;
 
-        console.log(parsedInput);
-
         let result = [];
 
         for (let i = 0; i < parsedChosung.length; i++) {
@@ -186,7 +188,7 @@ export default {
     },
     handleOk(bvModalEvt) {
       if (!this.review) {
-        alert("의견이 입력되지 않았습니다 :)");
+        alert("의견이 입력되지 않았습니다");
         //prevent close
         bvModalEvt.preventDefault();
         return;
@@ -198,10 +200,10 @@ export default {
       this.$axios
         .post("/api/reviews", { content: this.review })
         .then(res => {
-          alert(res);
+          alert("소중한 의견 감사드립니다 :)");
         })
         .catch(err => {
-          alert(err);
+          alert("오류가 발생했습니다");
         });
     }
   }
