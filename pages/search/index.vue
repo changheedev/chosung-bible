@@ -83,10 +83,10 @@ export default {
 
 <style scoped>
 i {
-  border: solid #555;
+  border: solid #000;
   border-width: 0 3px 3px 0;
   display: inline-block;
-  padding: 6px;
+  padding: 5px;
   margin-left: 3px;
 }
 

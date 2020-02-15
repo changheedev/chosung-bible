@@ -4,33 +4,32 @@
       <b-col cols="12">
         <h1 class="title">Error :(</h1>
         <p>{{ error.message }}</p>
-        <nuxt-link to="/">메인으로</nuxt-link>
-        <div class="area-review">
+        <b-button variant="link" to="/">메인으로</b-button>
+        <b-button class="btn-modal-review" variant="link" v-b-modal.modal-review
+          >오류알리기</b-button
+        >
+        <b-modal
+          id="modal-review"
+          title="오류알리기"
+          ok-title="전송"
+          cancel-title="취소"
+          @ok="handleOk"
+          @show="resetModal"
+          @hidden="resetModal"
+        >
           <p>
-            오류에 대해 알려주시면 빠르게 수정하도록 하겠습니다 :)
+            오류에 대해 알려주시면 빠르게 수정하도록 하겠습니다
           </p>
 
-          <b-button v-b-modal.modal-review>의견남기기</b-button>
-
-          <b-modal
-            id="modal-review"
-            title="의견남기기"
-            ok-title="전송"
-            cancel-title="취소"
-            @ok="handleOk"
-            @show="resetModal"
-            @hidden="resetModal"
-          >
-            <form ref="form" @submit.prevent="handleReviewSubmit">
-              <b-form-textarea
-                id="textarea-review"
-                v-model="review"
-                rows="3"
-                max-rows="6"
-              ></b-form-textarea>
-            </form>
-          </b-modal>
-        </div>
+          <form ref="form" @submit.prevent="handleReviewSubmit">
+            <b-form-textarea
+              id="textarea-review"
+              v-model="review"
+              rows="3"
+              max-rows="6"
+            ></b-form-textarea>
+          </form>
+        </b-modal>
       </b-col>
       <b-col cols="12"> </b-col>
     </b-row>
@@ -76,14 +75,5 @@ export default {
 <style scoped>
 .title {
   font-size: 1.3rem;
-}
-
-.area-review {
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 120px 0 20px;
-  text-align: center;
-  color: #555;
-  font-size: 0.9rem;
 }
 </style>
