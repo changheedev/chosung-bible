@@ -51,8 +51,7 @@ export const getters = {
 export const actions = {
   async nuxtServerInit({ commit }, { app }) {
     try {
-      const booksResponse = await app.$axios.get("/api/bible/books");
-      const books = booksResponse.data;
+      const books = await app.$axios.get("/api/bible/books");
       commit("setBooks", books);
 
       let chosungMap = new Map();
@@ -89,7 +88,7 @@ export const actions = {
 
     try {
       const bibleMeta = await app.$axios.get("/api/bible/metadata");
-      commit("setMetadata", bibleMeta.data);
+      commit("setMetadata", bibleMeta);
       console.log("Load metadata has been established successfully.");
     } catch (err) {
       console.error("Load bible metadata failed", err);

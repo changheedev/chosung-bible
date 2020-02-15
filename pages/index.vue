@@ -16,8 +16,7 @@
         </autocomplete>
         <div class="area-review">
           <p>
-            불편한 점이나 추가했으면 하는 기능 등 자유로운 의견을 보내주시면
-            다음 업데이트에 반영하도록 하겠습니다 :)
+            소중한 의견을 보내주시면 다음 업데이트에 반영하도록 하겠습니다 :)
           </p>
 
           <b-button v-b-modal.modal-review>의견남기기</b-button>
@@ -186,6 +185,12 @@ export default {
       this.review = "";
     },
     handleOk(bvModalEvt) {
+      if (!this.review) {
+        alert("의견이 입력되지 않았습니다 :)");
+        //prevent close
+        bvModalEvt.preventDefault();
+        return;
+      }
       // Trigger submit handler
       this.handleReviewSubmit();
     },
@@ -193,7 +198,7 @@ export default {
       this.$axios
         .post("/api/reviews", { content: this.review })
         .then(res => {
-          alert(res.data);
+          alert(res);
         })
         .catch(err => {
           alert(err);

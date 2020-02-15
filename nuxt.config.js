@@ -49,7 +49,7 @@ module.exports = {
     }
   },
   modules: ["bootstrap-vue/nuxt", "@nuxtjs/axios"],
-  plugins: ["~/plugins/autocomplete.js"],
+  plugins: ["~/plugins/autocomplete.js", "~/plugins/axios.js"],
   serverMiddleware: [{ path: "/api", handler: "~/api/server.js" }],
   axios: {
     proxy: true
