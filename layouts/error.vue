@@ -2,9 +2,13 @@
   <div class="container">
     <b-row align-v="center" class="text-center min-vh-100">
       <b-col cols="12">
-        <h1 class="title">Error :(</h1>
-        <p>{{ error.message }}</p>
-        <b-button variant="link" to="/">메인으로</b-button>
+        <h1 class="title">오류가 발생했습니다 :(</h1>
+        <p>사용에 불편을 드려 죄송합니다.</p>
+        <p>
+          오류가 발생한 상황에 대해 간략하게라도 알려주시면 <br />참고하여 빠른
+          시일내에 수정하도록 하겠습니다.
+        </p>
+        <b-button variant="link" href="/">메인으로</b-button>
         <b-button class="btn-modal-review" variant="link" v-b-modal.modal-review
           >오류알리기</b-button
         >
