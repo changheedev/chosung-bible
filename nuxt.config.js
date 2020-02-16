@@ -34,7 +34,7 @@ module.exports = {
     name: "초성성경", //앱 로딩 화면에서 보여줄 이름
     short_name: "초성성경", //아이콘 밑에 표시할 이름
     start_url: "/", // '/' = pages/index.vue
-    display: "standalone", //앱or웹, standalone : 실행했을때 앱처럼 보이게하는 설정
+    display: "minimal-ui",
     background_color: "#000"
   },
   /**
