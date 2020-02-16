@@ -1,11 +1,12 @@
 const env = require("dotenv").config();
 
 module.exports = {
+  env: env.parsed,
   /*
    ** Headers of the page
    */
   head: {
-    title: "초성바이블 - 초성과 숫자로 간편한 성경검색",
+    title: "초성성경 - 초성과 숫자로 간편한 성경검색",
     meta: [
       { charset: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -15,7 +16,7 @@ module.exports = {
         content: "초성과 숫자로 간편하게 성경을 검색해보세요."
       },
       { name: "og:type", content: "website" },
-      { name: "og:title", content: "초성바이블" },
+      { name: "og:title", content: "초성성경" },
       {
         name: "og:description",
         content: "초성과 숫자로 간편하게 성경을 검색해보세요."
@@ -26,6 +27,30 @@ module.exports = {
     link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }]
   },
   css: ["~/assets/style.css"],
+  /*
+   * pwa manifest
+   */
+  manifest: {
+    name: "초성성경", //앱 로딩 화면에서 보여줄 이름
+    short_name: "초성성경", //아이콘 밑에 표시할 이름
+    start_url: "/", // '/' = pages/index.vue
+    display: "standalone", //앱or웹, standalone : 실행했을때 앱처럼 보이게하는 설정
+    background_color: "#000"
+  },
+  /**
+   * offline 지원을 위한 모듈
+   * 현재 앱에서는 offline 모드를 지원하지는 않지만 홈화면에 추가기능을 위해 설정추가
+   */
+  workbox: {
+    offline: false,
+    runtimeCaching: [
+      {
+        urlPattern: "/*",
+        handler: "networkFirst",
+        method: "GET"
+      }
+    ]
+  },
   /*
    ** Customize the progress bar color
    */
@@ -48,7 +73,8 @@ module.exports = {
       }
     }
   },
-  modules: ["bootstrap-vue/nuxt", "@nuxtjs/axios"],
+  cache: true,
+  modules: ["bootstrap-vue/nuxt", "@nuxtjs/axios", "@nuxtjs/pwa"],
   plugins: ["~/plugins/autocomplete.js", "~/plugins/axios.js"],
   serverMiddleware: [{ path: "/api", handler: "~/api/server.js" }],
   axios: {
@@ -56,6 +82,5 @@ module.exports = {
   },
   proxy: {
     "/api/": process.env.BASE_URL
-  },
-  env: env.parsed
+  }
 };
