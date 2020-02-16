@@ -7,8 +7,14 @@ const router = express.Router();
 
 /* sequelize, mariadb */
 const Op = Sequelize.Op;
-let Bible = models.Bible;
-let Book = models.Book;
+const Bible = models.Bible;
+const Book = models.Book;
+
+//초기화 데이터 캐시
+const cache = {
+  books: null,
+  metadata: null
+};
 
 router.get(
   "/book/:book/chapter/:chapter/verse/:verse",
@@ -43,7 +49,15 @@ router.get(
 /*성경리스트('창세기', '출애굽기',...)를 불러온다*/
 router.get("/books", async (req, res, next) => {
   try {
+    //캐시된 데이터가 있다면 사용
+    if (cache.books) {
+      res.status(200).json(cache.books);
+      return;
+    }
+
     const result = await Book.findAll();
+    //캐시에 저장
+    cache.books = result;
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -53,6 +67,12 @@ router.get("/books", async (req, res, next) => {
 /* 성경별로 장마다 몇절까지 있는지의 데이터를 가져온다 */
 router.get("/metadata", async (req, res, next) => {
   try {
+    //캐시된 데이터가 있다면 사용
+    if (cache.metadata) {
+      res.status(200).json(cache.metadata);
+      return;
+    }
+
     // {book, maxChapter}
     const metaMaxChapters = await sequelize.query(
       "select book, max(chapter) as maxChapter from tbl_bible group by book"
@@ -91,6 +111,8 @@ router.get("/metadata", async (req, res, next) => {
       });
     });
 
+    //캐시에 저장
+    cache.metadata = resResult;
     res.status(200).json(resResult);
   } catch (err) {
     next(err);
