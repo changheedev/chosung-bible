@@ -58,7 +58,6 @@
           </ul>
         </div>
       </b-col>
-      <b-col cols="12" class="dummy"></b-col>
     </b-row>
   </section>
 </template>
