@@ -1,7 +1,9 @@
 <template>
   <section class="container">
     <b-navbar fixed="top" variant="light" type="light" class="shadow-sm">
-      <b-navbar-brand to="/"><i class="arrow left"></i></b-navbar-brand>
+      <b-navbar-brand to="/"
+        ><b-icon-arrow-left font-scale="2"></b-icon-arrow-left
+      ></b-navbar-brand>
     </b-navbar>
     <div class="view-bible-area mt-3" v-if="isViewBible">
       <ul class="ul-bible">
@@ -28,7 +30,9 @@
 </template>
 
 <script>
+import { BIconArrowLeft } from "bootstrap-vue";
 export default {
+  components: { BIconArrowLeft },
   asyncData({ query, store }) {
     const books = store.getters.books;
     return {
@@ -82,17 +86,8 @@ export default {
 </script>
 
 <style scoped>
-i {
-  border: solid #000;
-  border-width: 0 3px 3px 0;
-  display: inline-block;
-  padding: 5px;
-  margin-left: 3px;
-}
-
-.left {
-  transform: rotate(135deg);
-  -webkit-transform: rotate(135deg);
+.navbar-brand {
+  padding: 0;
 }
 
 .container {
