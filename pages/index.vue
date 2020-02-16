@@ -173,8 +173,11 @@ export default {
     },
     search(input) {
       return new Promise(resolve => {
+        // 입력값이 없을땐 최근 검색 기록을 보여준다
         if (input.length < 1) {
-          resolve([]);
+          const searchHistory =
+            JSON.parse(localStorage.getItem("searchHistory")) || new Array();
+          resolve(searchHistory);
         }
 
         const parsedInput = this.parseInput(input);
@@ -192,15 +195,39 @@ export default {
         resolve(result);
       });
     },
-
     getResultValue(result) {
       return result.text;
     },
     handleAutocompleteSubmit(result) {
       if (!result) return;
+      this.saveSearchHistory(result);
       this.$router.push(
         `/search?book=${result.book}&chapter=${result.chapter}&verse=${result.verse}`
       );
+    },
+    saveSearchHistory(data) {
+      const searchHistory =
+        JSON.parse(localStorage.getItem("searchHistory")) || new Array();
+      /**
+       * 새로운 검색기록을 배열의 가장 앞에 추가
+       * 중복된 기록은 삭제후 가장 앞에 추가
+       */
+      const index = searchHistory.findIndex(
+        history =>
+          history.book === data.book &&
+          history.chapter === data.chapter &&
+          history.verse === data.verse
+      );
+
+      //중복된 기록 삭제
+      if (index !== -1) {
+        searchHistory.splice(index, 1);
+      }
+      searchHistory.unshift(data);
+
+      //저장된 히스토리가 10개이상이 되면 마지막 기록 삭제 (최대 10개로 유지)
+      if (searchHistory.length > 10) searchHistory.pop();
+      localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
     },
     resetModal() {
       this.review = "";
