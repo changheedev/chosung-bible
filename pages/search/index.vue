@@ -2,16 +2,34 @@
   <section class="container">
     <b-navbar fixed="top" variant="light" type="light" class="shadow-sm">
       <b-navbar-brand to="/"
-        ><b-icon-arrow-left font-scale="2"></b-icon-arrow-left
+        ><b-icon-arrow-left font-scale="1.5"></b-icon-arrow-left
       ></b-navbar-brand>
+      <b-navbar-nav class="ml-auto">
+        <b-button-group>
+          <b-button
+            variant="outline-dark"
+            size="sm"
+            @click="decreaseFontSize"
+            :disabled="!isDecreaseFontSize"
+            ><b-icon-dash></b-icon-dash
+          ></b-button>
+          <b-button variant="outline-dark" size="sm" @click="increaseFontSize"
+            ><b-icon-plus></b-icon-plus
+          ></b-button>
+        </b-button-group>
+      </b-navbar-nav>
     </b-navbar>
+
     <div class="view-bible-area mt-3" v-if="isViewBible">
       <ul class="ul-bible">
         <li v-for="item in searchedData" :key="'bible_' + item.id">
           <div class="bible-metadata">
             {{ makeMetadataText(item) }}
           </div>
-          <div class="bible-content shadow-sm rounded p-3">
+          <div
+            :style="{ fontSize: fontSize + 'px' }"
+            class="bible-content shadow-sm rounded p-3"
+          >
             {{ item.content }}
           </div>
         </li>
@@ -30,9 +48,9 @@
 </template>
 
 <script>
-import { BIconArrowLeft } from "bootstrap-vue";
+import { BIconArrowLeft, BIconPlus, BIconDash } from "bootstrap-vue";
 export default {
-  components: { BIconArrowLeft },
+  components: { BIconArrowLeft, BIconPlus, BIconDash },
   asyncData({ query, store }) {
     const books = store.getters.books;
     return {
@@ -48,12 +66,17 @@ export default {
   data() {
     return {
       searchedData: [],
-      message: "검색 중입니다..."
+      message: "검색 중입니다...",
+      fontSize: 16
     };
   },
   computed: {
     isViewBible() {
       if (this.searchedData.length > 0) return true;
+      return false;
+    },
+    isDecreaseFontSize() {
+      if (this.fontSize > 8) return true;
       return false;
     }
   },
@@ -80,6 +103,12 @@ export default {
       return `${this.books[item.book - 1].name} ${item.chapter}${
         item.book === 19 ? "편" : "장"
       } ${item.verse}절`;
+    },
+    decreaseFontSize() {
+      if (this.fontSize > 8) this.fontSize--;
+    },
+    increaseFontSize() {
+      this.fontSize++;
     }
   }
 };
