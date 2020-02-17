@@ -1,6 +1,6 @@
 <template>
   <section class="container">
-    <b-row align-v="center">
+    <b-row align-v="center" class="pt-5">
       <b-col cols="12">
         <h1 class="title">초성 성경</h1>
         <p class="subtitle mb-5">초성과 숫자로 간편하게 성경을 검색해보세요</p>
@@ -64,6 +64,7 @@
 
 <script>
 const TrieSearch = require("trie-search");
+const Hangul = require("hangul-js");
 import Autocomplete from "@trevoreyre/autocomplete-vue";
 
 export default {
@@ -96,29 +97,36 @@ export default {
     },
     /* 입력의 초성과 숫자(장,절) 정보를 분리 */
     parseInput(input) {
-      const suffixNum = input.match(/\d+$/g);
+      let _input = "";
 
-      let chosung = [];
+      //초성대신 단어가 입력되었을때를 위한 초성추출 작업
+      Hangul.disassemble(input, true).forEach(disassembled => {
+        _input += disassembled[0];
+      });
+
+      const suffixNum = _input.match(/\d+$/g);
+
+      let text = [];
       let num = [];
 
       //input의 suffix가 숫자인 경우 2가지 경우의 결과를 합쳐서 반환
       if (suffixNum) {
         //case1: suffix의 첫 숫자를 초성으로 사용 => 요한1서, 요한2서... 등의 처리를 위함
         num.push(suffixNum[0].substring(1));
-        chosung.push(
-          input.substring(0, input.length - suffixNum[0].substring(1).length)
+        text.push(
+          _input.substring(0, _input.length - suffixNum[0].substring(1).length)
         );
         //case2: suffix 숫자를 모두 장,절 정보로 사용
         num.push(suffixNum[0]);
-        chosung.push(input.substring(0, input.length - suffixNum[0].length));
+        text.push(_input.substring(0, _input.length - suffixNum[0].length));
       }
       //case3: input의 suffix가 숫자가 아닌 경우
       else {
-        chosung.push(input);
+        text.push(_input);
         num.push(null);
       }
       return {
-        chosung: chosung,
+        chosung: text,
         num: num
       };
     },
