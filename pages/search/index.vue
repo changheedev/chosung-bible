@@ -7,13 +7,18 @@
       <b-navbar-nav class="ml-auto">
         <b-button-group>
           <b-button
+            class="disable-dbl-tap-zoom"
             variant="outline-dark"
             size="sm"
             @click="decreaseFontSize"
-            :disabled="!isDecreaseFontSize"
+            :disabled="disableDecFontSize"
             ><b-icon-dash></b-icon-dash
           ></b-button>
-          <b-button variant="outline-dark" size="sm" @click="increaseFontSize"
+          <b-button
+            class="disable-dbl-tap-zoom"
+            variant="outline-dark"
+            size="sm"
+            @click="increaseFontSize"
             ><b-icon-plus></b-icon-plus
           ></b-button>
         </b-button-group>
@@ -75,9 +80,9 @@ export default {
       if (this.searchedData.length > 0) return true;
       return false;
     },
-    isDecreaseFontSize() {
-      if (this.fontSize > 8) return true;
-      return false;
+    disableDecFontSize() {
+      if (this.fontSize > 16) return false;
+      return true;
     }
   },
   mounted() {
@@ -105,7 +110,7 @@ export default {
       } ${item.verse}절`;
     },
     decreaseFontSize() {
-      if (this.fontSize > 8) this.fontSize--;
+      if (this.fontSize > 16) this.fontSize--;
     },
     increaseFontSize() {
       this.fontSize++;
@@ -144,5 +149,9 @@ export default {
   font-size: 0.8rem;
   margin-left: 3px;
   color: #999;
+}
+
+.disable-dbl-tap-zoom {
+  touch-action: manipulation;
 }
 </style>
