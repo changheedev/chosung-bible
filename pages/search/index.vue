@@ -92,7 +92,12 @@ export default {
     async getBible(searchParam) {
       try {
         const bible = await this.$axios.get(
-          `/api/bible/book/${searchParam.book}/chapter/${searchParam.chapter}/verse/${searchParam.verse}?page=${searchParam.page}`
+          `/api/bible/book/${searchParam.book}/chapter/${searchParam.chapter}/verse/${searchParam.verse}`,
+          {
+            params: {
+              page: searchParam.page
+            }
+          }
         );
         if (bible.length == 0) this.message = "검색 결과가 없습니다.";
         this.searchedData = this.searchedData.concat(bible);
