@@ -28,6 +28,7 @@
     "trie-search": "^1.2.11"
   },
   "devDependencies": {
+    "@nuxtjs/google-analytics": "^2.2.3",
     "babel-eslint": "^10.0.1",
     "eslint": "^4.19.1",
     "eslint-friendly-formatter": "^4.0.1",

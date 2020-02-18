@@ -1,9 +1,9 @@
 <template>
   <section class="container">
-    <b-row align-v="center" class="pt-5">
+    <b-row align-v="center" class="min-vh-100">
       <b-col cols="12">
         <h1 class="title">초성 성경</h1>
-        <p class="subtitle mb-5">초성과 숫자로 간편하게 성경을 검색해보세요</p>
+        <p class="subtitle">초성과 숫자로 간편하게 성경을 검색해보세요</p>
         <autocomplete
           class="el-autocomplete"
           :search="search"
@@ -14,50 +14,8 @@
           @submit="handleAutocompleteSubmit"
         >
         </autocomplete>
-
-        <div class="notice-area">
-          <h2>안내사항</h2>
-          <ul>
-            <li>
-              모바일에서는 홈화면에 추가 기능을 통해 더욱 편리하게 사용할 수
-              있습니다.
-            </li>
-            <li>
-              사용 중 불편한 점 또는 원하는 기능이 있다면 자유롭게 보내주세요
-              :)<br />
-              <b-button
-                class="mt-2"
-                variant="primary"
-                size="sm"
-                v-b-modal.modal-review
-                >의견보내기</b-button
-              >
-              <b-modal
-                id="modal-review"
-                title="의견보내기"
-                ok-title="전송"
-                cancel-title="취소"
-                @ok="handleOk"
-                @show="resetModal"
-                @hidden="resetModal"
-              >
-                <p>
-                  소중한 의견을 보내주시면 다음 업데이트에 반영하도록 하겠습니다
-                  :)
-                </p>
-                <form ref="form" @submit.prevent="handleReviewSubmit">
-                  <b-form-textarea
-                    id="textarea-review"
-                    v-model="review"
-                    rows="3"
-                    max-rows="6"
-                  ></b-form-textarea>
-                </form>
-              </b-modal>
-            </li>
-          </ul>
-        </div>
       </b-col>
+      <b-col cols="12" class="dummy"> </b-col>
     </b-row>
   </section>
 </template>
@@ -66,10 +24,12 @@
 const TrieSearch = require("trie-search");
 const Hangul = require("hangul-js");
 import Autocomplete from "@trevoreyre/autocomplete-vue";
+import { BIconEnvelope } from "bootstrap-vue";
 
 export default {
   components: {
-    Autocomplete
+    Autocomplete,
+    BIconEnvelope
   },
   data() {
     return {
@@ -235,29 +195,6 @@ export default {
       //저장된 히스토리가 10개이상이 되면 마지막 기록 삭제 (최대 10개로 유지)
       if (searchHistory.length > 10) searchHistory.pop();
       localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
-    },
-    resetModal() {
-      this.review = "";
-    },
-    handleOk(bvModalEvt) {
-      if (!this.review) {
-        alert("내용이 입력되지 않았습니다");
-        //prevent close
-        bvModalEvt.preventDefault();
-        return;
-      }
-      // Trigger submit handler
-      this.handleReviewSubmit();
-    },
-    handleReviewSubmit() {
-      this.$axios
-        .post("/api/reviews", { content: this.review })
-        .then(res => {
-          alert("소중한 의견 감사드립니다 :)");
-        })
-        .catch(err => {
-          alert("오류가 발생했습니다");
-        });
     }
   }
 };
@@ -268,9 +205,6 @@ export default {
   padding: 0 20px;
   width: 100%;
   max-width: 700px;
-}
-.container .row {
-  min-height: calc(100vh - 59px);
 }
 
 .title {
@@ -283,6 +217,7 @@ export default {
 }
 
 .subtitle {
+  margin-bottom: 30px;
   text-align: center;
   color: #555;
   word-break: keep-all;
@@ -295,40 +230,17 @@ export default {
 }
 
 .el-autocomplete::before {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   top: -20px;
   right: 5px;
-  color: #555;
+  color: #999;
   position: absolute;
   content: "DB - 개역한글성경";
 }
 
-.area-review {
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 20px 0;
-  text-align: right;
-  color: #555;
-  font-size: 0.9rem;
-}
-
-.notice-area {
-  max-width: 500px;
-  margin: 50px auto;
-  padding: 10px 5px;
-}
-.notice-area h2 {
-  font-size: 1rem;
-}
-.notice-area ul {
-  padding: 0;
-  padding-left: 16px;
-}
-.notice-area li {
-  font-size: 0.8rem;
-  color: #999;
-}
-.notice-area li + li {
-  margin-top: 10px;
+@media (max-width: 420px) {
+  .subtitle {
+    font-size: 0.8rem;
+  }
 }
 </style>

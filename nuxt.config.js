@@ -6,6 +6,9 @@ module.exports = {
    ** Headers of the page
    */
   head: {
+    htmlAttrs: {
+      lang: "ko-KR"
+    },
     title: "초성성경 - 초성과 숫자로 간편한 성경검색",
     meta: [
       { charset: "utf-8" },
@@ -73,6 +76,17 @@ module.exports = {
       }
     }
   },
+  buildModules: [
+    [
+      "@nuxtjs/google-analytics",
+      {
+        id: process.env.GOOGLE_ANALYTICS_ID,
+        debug: {
+          sendHitTask: process.env.NODE_ENV === "production" //production 모드일때만 사용
+        }
+      }
+    ]
+  ],
   cache: true,
   modules: ["bootstrap-vue/nuxt", "@nuxtjs/axios", "@nuxtjs/pwa"],
   plugins: ["~/plugins/autocomplete.js", "~/plugins/axios.js"],

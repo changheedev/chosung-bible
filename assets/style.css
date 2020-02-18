@@ -30,7 +30,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   box-sizing: border-box;
-  height: calc(100% - 56px);
+}
+
+.min-vh-100 {
+  /* 정확히 (100vh - footer높이) 에 맞출경우 ios safari 하단 네비게이션에 가려지는 부분이 발생 */
+  min-height: calc(89vh - 85px) !important;
 }
 
 *,
