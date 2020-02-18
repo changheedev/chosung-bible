@@ -72,10 +72,18 @@ export default {
       //input의 suffix가 숫자인 경우 2가지 경우의 결과를 합쳐서 반환
       if (suffixNum) {
         //case1: suffix의 첫 숫자를 초성으로 사용 => 요한1서, 요한2서... 등의 처리를 위함
-        num.push(suffixNum[0].substring(1));
-        text.push(
-          _input.substring(0, _input.length - suffixNum[0].substring(1).length)
-        );
+        if (
+          input.substring(0, 2) === "ㅇㅎ" ||
+          input.substring(0, 2) === "dg"
+        ) {
+          num.push(suffixNum[0].substring(1));
+          text.push(
+            _input.substring(
+              0,
+              _input.length - suffixNum[0].substring(1).length
+            )
+          );
+        }
         //case2: suffix 숫자를 모두 장,절 정보로 사용
         num.push(suffixNum[0]);
         text.push(_input.substring(0, _input.length - suffixNum[0].length));
@@ -105,7 +113,10 @@ export default {
         let verse = numstr.substring(lenOfChapter)
           ? numstr.substring(lenOfChapter)
           : "1";
-        result.push([Number(chapter), Number(verse)]);
+
+        // 502 => 5, 02 로 나눠지지 않도록 verse 가 0으로 시작하는 경우는 제외시켜준다.
+        if (!(verse.charAt(0) === "0"))
+          result.push([Number(chapter), Number(verse)]);
       }
 
       return result;
@@ -117,7 +128,7 @@ export default {
       this.trie.get(chosung).forEach(book => {
         parsedNum.forEach(([chapter, verse]) => {
           const _metadata = this.metadata[book.id - 1];
-          // book(item.id) 의 최대 chapter, 최대 verse 를 벗어나지 않는 경우에만 리스트에 넣는다
+          // book 의 최대 chapter, 최대 verse 를 벗어나지 않는 경우에만 리스트에 넣는다
           // 0인 경우 처리 추가
           if (
             chapter > 0 &&
@@ -154,8 +165,19 @@ export default {
         let result = [];
 
         for (let i = 0; i < parsedChosung.length; i++) {
-          result = result.concat(
-            this.makeAutoCompleteList(parsedChosung[i], parsedNum[i])
+          //결과 리스트에 없는 아이템만 리스트에 넣는다. (중복 결과 방지)
+          this.makeAutoCompleteList(parsedChosung[i], parsedNum[i]).forEach(
+            newItem => {
+              if (
+                result.findIndex(
+                  orderItem =>
+                    orderItem.book === newItem.book &&
+                    orderItem.chapter === newItem.chapter &&
+                    orderItem.verse === newItem.verse
+                ) === -1
+              )
+                result.push(newItem);
+            }
           );
         }
 
@@ -168,9 +190,14 @@ export default {
     handleAutocompleteSubmit(result) {
       if (!result) return;
       this.saveSearchHistory(result);
-      this.$router.push(
-        `/search?book=${result.book}&chapter=${result.chapter}&verse=${result.verse}`
-      );
+      this.$router.push({
+        path: "/search",
+        query: {
+          book: result.book,
+          chapter: result.chapter,
+          verse: result.verse
+        }
+      });
     },
     saveSearchHistory(data) {
       const searchHistory =
