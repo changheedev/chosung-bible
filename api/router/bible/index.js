@@ -73,7 +73,7 @@ router.get("", async (req, res, next) => {
     keywordSet.push(keyword);
     keywordSet = keywordSet.concat(keywordTokens);
 
-    LogQueue.insertLog(req.useragent, req.url);
+    LogQueue.insertLog(req.useragent, decodeURIComponent(req.url));
     res.status(200).json({ data: result, keywordSet: keywordSet });
   } catch (err) {
     next(err);
