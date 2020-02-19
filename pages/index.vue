@@ -23,12 +23,10 @@
 <script>
 const TrieSearch = require("trie-search");
 const Hangul = require("hangul-js");
-import Autocomplete from "@trevoreyre/autocomplete-vue";
 import { BIconEnvelope } from "bootstrap-vue";
 
 export default {
   components: {
-    Autocomplete,
     BIconEnvelope
   },
   data() {
