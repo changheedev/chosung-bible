@@ -46,6 +46,26 @@ router.get(
   }
 );
 
+router.get("", async (req, res, next) => {
+  const keyword = decodeURIComponent(req.query.keyword);
+  const page = Number(req.query.page);
+  try {
+    const result = await Bible.findAll({
+      where: {
+        content: {
+          [Op.substring]: keyword
+        }
+      },
+      offset: page * 10,
+      limit: 10
+    });
+    LogQueue.insertLog(req.useragent, req.url);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 /*성경리스트('창세기', '출애굽기',...)를 불러온다*/
 router.get("/books", async (req, res, next) => {
   try {
