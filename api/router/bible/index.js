@@ -86,28 +86,12 @@ router.get("/metadata", async (req, res, next) => {
     let resResult = [];
 
     metaMaxChapters[0].forEach(_metaMaxChapter => {
-      /*
-    [
-      {
-        book: 1, 
-        maxChapter: 50, 
-        maxVerses: [
-          {
-            book: 1, 
-            chapter: 1, 
-            maxVerse: 31
-          }, 
-          ...
-        ]
-      }
-    ]
-    */
       resResult.push({
         book: _metaMaxChapter.book,
         maxChapter: _metaMaxChapter.maxChapter,
-        maxVerses: metaMaxVerses[0].filter(
-          _metaMaxVerse => _metaMaxVerse.book === _metaMaxChapter.book
-        )
+        maxVerses: metaMaxVerses[0]
+          .filter(_metaMaxVerse => _metaMaxVerse.book === _metaMaxChapter.book)
+          .map(_filteredMetaMaxVerse => _filteredMetaMaxVerse.maxVerse)
       });
     });
 

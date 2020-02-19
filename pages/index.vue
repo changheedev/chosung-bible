@@ -134,7 +134,7 @@ export default {
             chapter > 0 &&
             chapter <= _metadata.maxChapter &&
             verse > 0 &&
-            verse <= _metadata.maxVerses[chapter - 1].maxVerse
+            verse <= _metadata.maxVerses[chapter - 1]
           ) {
             result.push({
               text: `${book.name} ${chapter}${
