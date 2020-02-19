@@ -55,6 +55,35 @@ export default {
       this.trie = new TrieSearch("irrelevantForMapMethod");
       chosungMap.forEach((value, key, mapObject) => this.trie.map(key, value));
     },
+    isPossibleHasNumberInChosung(input) {
+      const startTwoWord = input.substring(0, 2);
+      if (startTwoWord === "ㅇㅎ" || startTwoWord === "dg") return true;
+      return false;
+    },
+    getBookMetadata(book) {
+      return this.metadata[book - 1];
+    },
+    isRangeChapter(book, chapter) {
+      const _metadata = this.getBookMetadata(book);
+      if (chapter > 0 && chapter <= _metadata.maxChapter) return true;
+      return false;
+    },
+    isRangeVerse(book, chapter, verse) {
+      const _metadata = this.getBookMetadata(book);
+      if (verse > 0 && verse <= _metadata.maxVerses[chapter - 1]) return true;
+      return false;
+    },
+    isVerseStartWithZero(verse) {
+      return verse.charAt(0) === "0";
+    },
+    findBibleIndex(from, bible) {
+      return from.findIndex(
+        item =>
+          item.book === bible.book &&
+          item.chapter === bible.chapter &&
+          item.verse === bible.verse
+      );
+    },
     /* 입력의 초성과 숫자(장,절) 정보를 분리 */
     parseInput(input) {
       let _input = "";
@@ -72,10 +101,7 @@ export default {
       //input의 suffix가 숫자인 경우 2가지 경우의 결과를 합쳐서 반환
       if (suffixNum) {
         //case1: suffix의 첫 숫자를 초성으로 사용 => 요한1서, 요한2서... 등의 처리를 위함
-        if (
-          input.substring(0, 2) === "ㅇㅎ" ||
-          input.substring(0, 2) === "dg"
-        ) {
+        if (this.isPossibleHasNumberInChosung(input)) {
           num.push(suffixNum[0].substring(1));
           text.push(
             _input.substring(
@@ -98,6 +124,7 @@ export default {
         num: num
       };
     },
+
     parseNum(num) {
       //숫자가 입력되지 않은 경우
       if (!num) return [[1, 1]];
@@ -115,7 +142,7 @@ export default {
           : "1";
 
         // 502 => 5, 02 로 나눠지지 않도록 verse 가 0으로 시작하는 경우는 제외시켜준다.
-        if (!(verse.charAt(0) === "0"))
+        if (!this.isVerseStartWithZero(verse))
           result.push([Number(chapter), Number(verse)]);
       }
 
@@ -127,14 +154,10 @@ export default {
 
       this.trie.get(chosung).forEach(book => {
         parsedNum.forEach(([chapter, verse]) => {
-          const _metadata = this.metadata[book.id - 1];
           // book 의 최대 chapter, 최대 verse 를 벗어나지 않는 경우에만 리스트에 넣는다
-          // 0인 경우 처리 추가
           if (
-            chapter > 0 &&
-            chapter <= _metadata.maxChapter &&
-            verse > 0 &&
-            verse <= _metadata.maxVerses[chapter - 1]
+            this.isRangeChapter(book.id, chapter) &&
+            this.isRangeVerse(book.id, chapter, verse)
           ) {
             result.push({
               text: `${book.name} ${chapter}${
@@ -168,14 +191,7 @@ export default {
           //결과 리스트에 없는 아이템만 리스트에 넣는다. (중복 결과 방지)
           this.makeAutoCompleteList(parsedChosung[i], parsedNum[i]).forEach(
             newItem => {
-              if (
-                result.findIndex(
-                  orderItem =>
-                    orderItem.book === newItem.book &&
-                    orderItem.chapter === newItem.chapter &&
-                    orderItem.verse === newItem.verse
-                ) === -1
-              )
+              if (this.findBibleIndex(result, newItem) === -1)
                 result.push(newItem);
             }
           );
@@ -206,12 +222,7 @@ export default {
        * 새로운 검색기록을 배열의 가장 앞에 추가
        * 중복된 기록은 삭제후 가장 앞에 추가
        */
-      const index = searchHistory.findIndex(
-        history =>
-          history.book === data.book &&
-          history.chapter === data.chapter &&
-          history.verse === data.verse
-      );
+      const index = this.findBibleIndex(searchHistory, data);
 
       //중복된 기록 삭제
       if (index !== -1) {
