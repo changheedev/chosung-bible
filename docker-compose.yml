@@ -4,6 +4,7 @@ services:
     image: mariadb:latest
     container_name: mariadb
     restart: always
+    command: ["--ft-min-word-len=2"]
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PW}
     volumes:
