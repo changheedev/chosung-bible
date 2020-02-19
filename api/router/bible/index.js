@@ -60,7 +60,10 @@ router.get("", async (req, res, next) => {
       where: Sequelize.literal(`MATCH (content) AGAINST ('${keyword}')`),
       order: [
         sequelize.literal(`MATCH (content) AGAINST ('"${keyword}"') DESC`),
-        sequelize.literal(`MATCH (content) AGAINST ('${keywordQuery}') DESC`)
+        sequelize.literal(`MATCH (content) AGAINST ('${keywordQuery}') DESC`),
+        ["book", "ASC"],
+        ["chapter", "ASC"],
+        ["verse", "ASC"]
       ],
       offset: page * 10,
       limit: 10
