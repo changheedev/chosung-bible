@@ -1,5 +1,5 @@
 <template>
-  <section class="container">
+  <section class="container min-vh-100">
     <b-navbar fixed="top" variant="light" type="light" class="shadow-sm">
       <b-navbar-brand to="/"
         ><b-icon-arrow-left font-scale="1.5"></b-icon-arrow-left
@@ -46,7 +46,7 @@
       </ul>
       <div class="text-center">
         <b-button
-          class="btn-more mt-3 px-5"
+          class="btn-more mt-5 px-5"
           variant="primary"
           @click="getBibleNextPage()"
           >더보기</b-button
