@@ -46,21 +46,32 @@ router.get(
   }
 );
 
+/**
+ * 키워드 검색, fulltext index
+ */
 router.get("", async (req, res, next) => {
-  const keyword = decodeURIComponent(req.query.keyword);
-  const page = Number(req.query.page);
   try {
+    const keyword = decodeURIComponent(req.query.keyword);
+    const keywordTokens = keyword.split(" ");
+    const keywordQuery = keywordTokens.map(token => `+${token}*`).join(" ");
+    const page = Number(req.query.page);
+
     const result = await Bible.findAll({
-      where: {
-        content: {
-          [Op.substring]: keyword
-        }
-      },
+      where: Sequelize.literal(`MATCH (content) AGAINST ('${keyword}')`),
+      order: [
+        sequelize.literal(`MATCH (content) AGAINST ('"${keyword}"') DESC`),
+        sequelize.literal(`MATCH (content) AGAINST ('${keywordQuery}') DESC`)
+      ],
       offset: page * 10,
       limit: 10
     });
+
+    let keywordSet = [];
+    keywordSet.push(keyword);
+    keywordSet = keywordSet.concat(keywordTokens);
+
     LogQueue.insertLog(req.useragent, req.url);
-    res.status(200).json(result);
+    res.status(200).json({ data: result, keywordSet: keywordSet });
   } catch (err) {
     next(err);
   }
