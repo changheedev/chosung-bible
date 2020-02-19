@@ -40,6 +40,7 @@ export default {
   },
   mounted() {
     try {
+      this.updatePrevVersionHistories();
       this.loadMetadata();
       this.createTrie();
     } catch (err) {
@@ -47,6 +48,22 @@ export default {
     }
   },
   methods: {
+    //이전 버전의 포맷으로 저장된 히스토리들을 업데이트 된 포맷으로 변경
+    updatePrevVersionHistories() {
+      let histories = this.getHistoryFromLocalStorage();
+      if (histories) {
+        histories = histories.map(history => {
+          if (!history.type) {
+            return {
+              type: "meta",
+              data: history
+            };
+          }
+          return history;
+        });
+        this.updateHistoryToLocalStorage(histories);
+      }
+    },
     loadMetadata() {
       this.metadata = this.$store.getters.metadata;
     },
@@ -60,40 +77,9 @@ export default {
       if (startTwoWord === "ㅇㅎ" || startTwoWord === "dg") return true;
       return false;
     },
-    getBookMetadata(book) {
-      return this.metadata[book - 1];
-    },
-    isRangeChapter(book, chapter) {
-      const _metadata = this.getBookMetadata(book);
-      if (chapter > 0 && chapter <= _metadata.maxChapter) return true;
-      return false;
-    },
-    isRangeVerse(book, chapter, verse) {
-      const _metadata = this.getBookMetadata(book);
-      if (verse > 0 && verse <= _metadata.maxVerses[chapter - 1]) return true;
-      return false;
-    },
-    isVerseStartWithZero(verse) {
-      return verse.charAt(0) === "0";
-    },
-    findBibleIndex(from, bible) {
-      return from.findIndex(
-        item =>
-          item.book === bible.book &&
-          item.chapter === bible.chapter &&
-          item.verse === bible.verse
-      );
-    },
     /* 입력의 초성과 숫자(장,절) 정보를 분리 */
     parseInput(input) {
-      let _input = "";
-
-      //초성대신 단어가 입력되었을때를 위한 초성추출 작업
-      Hangul.disassemble(input, true).forEach(disassembled => {
-        _input += disassembled[0];
-      });
-
-      const suffixNum = _input.match(/\d+$/g);
+      const suffixNum = input.match(/\d+$/g);
 
       let text = [];
       let num = [];
@@ -104,19 +90,16 @@ export default {
         if (this.isPossibleHasNumberInChosung(input)) {
           num.push(suffixNum[0].substring(1));
           text.push(
-            _input.substring(
-              0,
-              _input.length - suffixNum[0].substring(1).length
-            )
+            input.substring(0, input.length - suffixNum[0].substring(1).length)
           );
         }
         //case2: suffix 숫자를 모두 장,절 정보로 사용
         num.push(suffixNum[0]);
-        text.push(_input.substring(0, _input.length - suffixNum[0].length));
+        text.push(input.substring(0, input.length - suffixNum[0].length));
       }
       //case3: input의 suffix가 숫자가 아닌 경우
       else {
-        text.push(_input);
+        text.push(input);
         num.push(null);
       }
       return {
@@ -124,7 +107,9 @@ export default {
         num: num
       };
     },
-
+    isVerseStartWithZero(verse) {
+      return verse.charAt(0) === "0";
+    },
     parseNum(num) {
       //숫자가 입력되지 않은 경우
       if (!num) return [[1, 1]];
@@ -145,8 +130,20 @@ export default {
         if (!this.isVerseStartWithZero(verse))
           result.push([Number(chapter), Number(verse)]);
       }
-
       return result;
+    },
+    getBookMetadata(book) {
+      return this.metadata[book - 1];
+    },
+    isRangeChapter(book, chapter) {
+      const _metadata = this.getBookMetadata(book);
+      if (chapter > 0 && chapter <= _metadata.maxChapter) return true;
+      return false;
+    },
+    isRangeVerse(book, chapter, verse) {
+      const _metadata = this.getBookMetadata(book);
+      if (verse > 0 && verse <= _metadata.maxVerses[chapter - 1]) return true;
+      return false;
     },
     makeAutoCompleteList(chosung, num) {
       let result = [];
@@ -172,13 +169,28 @@ export default {
       });
       return result;
     },
+    findIndexByMeta(from, meta) {
+      return from.findIndex(
+        item =>
+          item.data.book === meta.book &&
+          item.data.chapter === meta.chapter &&
+          item.data.verse === meta.verse
+      );
+    },
+    findIndexByKeyword(from, keyword) {
+      return from.findIndex(item => item.data.keyword === keyword);
+    },
     search(input) {
       return new Promise(resolve => {
         // 입력값이 없을땐 최근 검색 기록을 보여준다
         if (input.length < 1) {
-          const searchHistory =
-            JSON.parse(localStorage.getItem("searchHistory")) || new Array();
-          resolve(searchHistory);
+          const histories = this.getOrDefaultHistoryFromLocalStorage();
+          resolve(histories);
+        }
+
+        //초성이 아닌 문장이 입력되었을때 키워드 검색 처리
+        if (Hangul.isComplete(input)) {
+          resolve([{ type: "keyword", data: { keyword: input } }]);
         }
 
         const parsedInput = this.parseInput(input);
@@ -191,8 +203,8 @@ export default {
           //결과 리스트에 없는 아이템만 리스트에 넣는다. (중복 결과 방지)
           this.makeAutoCompleteList(parsedChosung[i], parsedNum[i]).forEach(
             newItem => {
-              if (this.findBibleIndex(result, newItem) === -1)
-                result.push(newItem);
+              if (this.findIndexByMeta(result, newItem) === -1)
+                result.push({ type: "meta", data: newItem });
             }
           );
         }
@@ -201,38 +213,56 @@ export default {
       });
     },
     getResultValue(result) {
-      return result.text;
+      if (result.type === "keyword") return "검색: " + result.data.keyword;
+      return result.data.text;
     },
     handleAutocompleteSubmit(result) {
       if (!result) return;
       this.saveSearchHistory(result);
-      this.$router.push({
-        path: "/search",
-        query: {
-          book: result.book,
-          chapter: result.chapter,
-          verse: result.verse
-        }
-      });
+
+      let query = {};
+
+      if (result.type === "keyword") {
+        query = {
+          type: result.type,
+          keyword: encodeURIComponent(result.data.keyword)
+        };
+      } else {
+        query = {
+          type: result.type,
+          book: result.data.book,
+          chapter: result.data.chapter,
+          verse: result.data.verse
+        };
+      }
+
+      this.$router.push({ path: "/search", query: query });
     },
-    saveSearchHistory(data) {
-      const searchHistory =
-        JSON.parse(localStorage.getItem("searchHistory")) || new Array();
-      /**
-       * 새로운 검색기록을 배열의 가장 앞에 추가
-       * 중복된 기록은 삭제후 가장 앞에 추가
-       */
-      const index = this.findBibleIndex(searchHistory, data);
+    getHistoryFromLocalStorage() {
+      return JSON.parse(localStorage.getItem("searchHistory"));
+    },
+    getOrDefaultHistoryFromLocalStorage() {
+      return JSON.parse(localStorage.getItem("searchHistory")) || new Array();
+    },
+    removeDuplHistory(histories, newHistory) {
+      let index = 0;
+      if (newHistory.type === "keyword")
+        index = this.findIndexByKeyword(histories, newHistory.data.keyword);
+      else index = this.findIndexByMeta(histories, newHistory.data);
 
       //중복된 기록 삭제
-      if (index !== -1) {
-        searchHistory.splice(index, 1);
-      }
-      searchHistory.unshift(data);
-
-      //저장된 히스토리가 10개이상이 되면 마지막 기록 삭제 (최대 10개로 유지)
-      if (searchHistory.length > 10) searchHistory.pop();
-      localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
+      if (index !== -1) histories.splice(index, 1);
+    },
+    updateHistoryToLocalStorage(histories) {
+      //히스토리는 10개 까지만 저장
+      if (histories.length > 10) histories.pop();
+      localStorage.setItem("searchHistory", JSON.stringify(histories));
+    },
+    saveSearchHistory(newHistory) {
+      const histories = this.getOrDefaultHistoryFromLocalStorage();
+      this.removeDuplHistory(histories, newHistory);
+      histories.unshift(newHistory);
+      this.updateHistoryToLocalStorage(histories);
     }
   }
 };
