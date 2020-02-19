@@ -35,7 +35,12 @@
             :style="{ fontSize: fontSize + 'px' }"
             class="bible-content shadow-sm rounded p-3"
           >
-            {{ item.content }}
+            <text-highlight
+              :queries="keywordSet"
+              v-if="searchParams.type === 'keyword'"
+              >{{ item.content }}</text-highlight
+            >
+            <span v-else>{{ item.content }}</span>
           </div>
         </li>
       </ul>
@@ -54,23 +59,38 @@
 
 <script>
 import { BIconArrowLeft, BIconPlus, BIconDash } from "bootstrap-vue";
+
 export default {
   components: { BIconArrowLeft, BIconPlus, BIconDash },
   asyncData({ query, store }) {
     const books = store.getters.books;
-    return {
-      books: books,
-      searchParam: {
+    let searchParams = {};
+
+    if (query.type === "keyword") {
+      searchParams = {
+        type: "keyword",
+        keyword: query.keyword,
+        page: query.page || 0
+      };
+    } else {
+      searchParams = {
+        type: "meta",
         book: query.book || 1,
         chapter: query.chapter || 1,
         verse: query.verse || 1,
         page: query.page || 0
-      }
+      };
+    }
+
+    return {
+      books: books,
+      searchParams: searchParams
     };
   },
   data() {
     return {
       searchedData: [],
+      keywordSet: [],
       message: "검색 중입니다...",
       fontSize: 16
     };
@@ -86,28 +106,50 @@ export default {
     }
   },
   mounted() {
-    this.getBible(this.searchParam);
+    this.getBible(this.searchParams);
   },
   methods: {
-    async getBible(searchParam) {
+    async getBible(searchParams) {
       try {
-        const bible = await this.$axios.get(
-          `/api/bible/book/${searchParam.book}/chapter/${searchParam.chapter}/verse/${searchParam.verse}`,
-          {
-            params: {
-              page: searchParam.page
-            }
-          }
-        );
+        let bible;
+        if (searchParams.type === "keyword") {
+          const result = await this.getBibleByKeyword(searchParams);
+          bible = result.data;
+          this.keywordSet = result.keywordSet;
+        } else bible = await this.getBibleByMeta(searchParams);
+
         if (bible.length == 0) this.message = "검색 결과가 없습니다.";
         this.searchedData = this.searchedData.concat(bible);
       } catch (err) {
         this.message = "검색 과정에서 오류가 발생했습니다.";
       }
     },
+    getBibleByMeta({ type, book, chapter, verse, page }) {
+      return new Promise((resolve, reject) => {
+        this.$axios
+          .get(`/api/bible/book/${book}/chapter/${chapter}/verse/${verse}`, {
+            params: {
+              page: page
+            }
+          })
+          .then(result => resolve(result));
+      });
+    },
+    getBibleByKeyword({ type, keyword, page }) {
+      return new Promise((resolve, reject) => {
+        this.$axios
+          .get("/api/bible", {
+            params: {
+              keyword: keyword,
+              page: page
+            }
+          })
+          .then(result => resolve(result));
+      });
+    },
     getBibleNextPage() {
-      this.searchParam.page = this.searchParam.page + 1;
-      this.getBible(this.searchParam);
+      this.searchParams.page = this.searchParams.page + 1;
+      this.getBible(this.searchParams);
     },
     makeMetadataText(item) {
       return `${this.books[item.book - 1].name} ${item.chapter}${
@@ -158,5 +200,8 @@ export default {
 
 .disable-dbl-tap-zoom {
   touch-action: manipulation;
+}
+.bible-content {
+  line-height: 1.8rem;
 }
 </style>

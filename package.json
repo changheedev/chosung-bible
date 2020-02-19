@@ -25,7 +25,8 @@
     "mongoose": "^5.8.12",
     "nuxt": "^2.0.0",
     "sequelize": "^5.21.4",
-    "trie-search": "^1.2.11"
+    "trie-search": "^1.2.11",
+    "vue-text-highlight": "^2.0.10"
   },
   "devDependencies": {
     "@nuxtjs/google-analytics": "^2.2.3",
