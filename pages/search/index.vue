@@ -35,7 +35,12 @@
             :style="{ fontSize: fontSize + 'px' }"
             class="bible-content shadow-sm rounded p-3"
           >
-            {{ item.content }}
+            <text-highlight
+              :queries="keywordSet"
+              v-if="searchParams.type === 'keyword'"
+              >{{ item.content }}</text-highlight
+            >
+            <span v-else>{{ item.content }}</span>
           </div>
         </li>
       </ul>
@@ -54,6 +59,7 @@
 
 <script>
 import { BIconArrowLeft, BIconPlus, BIconDash } from "bootstrap-vue";
+
 export default {
   components: { BIconArrowLeft, BIconPlus, BIconDash },
   asyncData({ query, store }) {
@@ -84,6 +90,7 @@ export default {
   data() {
     return {
       searchedData: [],
+      keywordSet: [],
       message: "검색 중입니다...",
       fontSize: 16
     };
@@ -105,9 +112,11 @@ export default {
     async getBible(searchParams) {
       try {
         let bible;
-        if (searchParams.type === "keyword")
-          bible = await this.getBibleByKeyword(searchParams);
-        else bible = await this.getBibleByMeta(searchParams);
+        if (searchParams.type === "keyword") {
+          const result = await this.getBibleByKeyword(searchParams);
+          bible = result.data;
+          this.keywordSet = result.keywordSet;
+        } else bible = await this.getBibleByMeta(searchParams);
 
         if (bible.length == 0) this.message = "검색 결과가 없습니다.";
         this.searchedData = this.searchedData.concat(bible);
@@ -191,5 +200,8 @@ export default {
 
 .disable-dbl-tap-zoom {
   touch-action: manipulation;
+}
+.bible-content {
+  line-height: 1.8rem;
 }
 </style>
