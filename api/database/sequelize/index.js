@@ -15,8 +15,8 @@ class Database {
         dialect: "mariadb",
         dialectOptions: {
           ssl: false,
-          charset: "utf8",
-          collate: "utf8_general_ci",
+          charset: "utf8mb4",
+          collate: "utf8mb4_unicode_ci",
           timezone: "Asia/Seoul"
         },
         define: {
