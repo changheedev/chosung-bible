@@ -53,14 +53,21 @@ router.get("", async (req, res, next) => {
   try {
     const keyword = decodeURIComponent(req.query.keyword);
     const keywordTokens = keyword.split(" ");
-    const keywordQuery = keywordTokens.map(token => `+${token}*`).join(" ");
     const page = Number(req.query.page);
 
     const result = await Bible.findAll({
-      where: Sequelize.literal(`MATCH (content) AGAINST ('${keyword}')`),
+      where: Sequelize.literal(
+        `MATCH (content) AGAINST ('${keywordTokens.join(" ")}' in boolean mode)`
+      ),
       order: [
-        sequelize.literal(`MATCH (content) AGAINST ('"${keyword}"') DESC`),
-        sequelize.literal(`MATCH (content) AGAINST ('${keywordQuery}') DESC`),
+        sequelize.literal(
+          `MATCH (content) AGAINST ('"${keyword}"' in boolean mode) DESC`
+        ),
+        sequelize.literal(
+          `MATCH (content) AGAINST ('${keywordTokens
+            .map(token => `+${token}`)
+            .join(" ")}' in boolean mode) DESC`
+        ),
         ["book", "ASC"],
         ["chapter", "ASC"],
         ["verse", "ASC"]
@@ -69,12 +76,8 @@ router.get("", async (req, res, next) => {
       limit: 10
     });
 
-    let keywordSet = [];
-    keywordSet.push(keyword);
-    keywordSet = keywordSet.concat(keywordTokens);
-
     LogQueue.insertLog(req.useragent, decodeURIComponent(req.url));
-    res.status(200).json({ data: result, keywordSet: keywordSet });
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }
