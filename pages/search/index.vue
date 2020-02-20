@@ -36,7 +36,7 @@
             class="bible-content shadow-sm rounded p-3"
           >
             <text-highlight
-              :queries="keywordSet"
+              :queries="tokenSet"
               v-if="searchParams.type === 'keyword'"
               >{{ item.content }}</text-highlight
             >
@@ -90,7 +90,6 @@ export default {
   data() {
     return {
       searchedData: [],
-      keywordSet: [],
       message: "검색 중입니다...",
       fontSize: 16
     };
@@ -103,6 +102,27 @@ export default {
     disableDecFontSize() {
       if (this.fontSize > 16) return false;
       return true;
+    },
+    tokenSet() {
+      let tokenSet = [];
+      if (this.searchParams.type !== "keyword") return tokenSet;
+
+      const keyword = decodeURIComponent(this.searchParams.keyword);
+
+      const keywordTokens = keyword.split(" ");
+
+      tokenSet.push(keyword);
+      tokenSet = tokenSet.concat(keywordTokens);
+
+      keywordTokens
+        .filter(token => token.length >= 2)
+        .forEach(token => {
+          for (let i = 1; i <= token.length - 1; i++) {
+            const newToken = token.substring(0, i) + " " + token.substring(i);
+            tokenSet.push(newToken);
+          }
+        });
+      return tokenSet;
     }
   },
   mounted() {
@@ -113,9 +133,7 @@ export default {
       try {
         let bible;
         if (searchParams.type === "keyword") {
-          const result = await this.getBibleByKeyword(searchParams);
-          bible = result.data;
-          this.keywordSet = result.keywordSet;
+          bible = await this.getBibleByKeyword(searchParams);
         } else bible = await this.getBibleByMeta(searchParams);
 
         if (bible.length == 0) this.message = "검색 결과가 없습니다.";
