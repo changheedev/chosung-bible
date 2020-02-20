@@ -1,7 +1,8 @@
 version: "3"
 services:
   mariadb:
-    image: mariadb:latest
+    image: kazaoki/mariadb-mroonga:latest
+    # image: mariadb:latest
     container_name: mariadb
     restart: always
     command: ["--ft-min-word-len=2"]
