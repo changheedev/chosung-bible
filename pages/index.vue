@@ -211,7 +211,7 @@ export default {
       });
     },
     getResultValue(result) {
-      if (result.type === "keyword") return "검색: " + result.data.keyword;
+      if (result.type === "keyword") return result.data.keyword;
       return result.data.text;
     },
     handleAutocompleteSubmit(result) {
