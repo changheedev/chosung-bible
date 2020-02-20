@@ -28,7 +28,7 @@ router.use(async (error, req, res, next) => {
       message: error.message,
       stack: error.stack
     };
-    console.error("An error occurred for the following reason:\n", err);
+    console.error("An error occurred for the following reason:\n", error);
     await ErrorLog.create(newError);
   } catch (err) {
     console.error("Insert errorlog failed", err);
