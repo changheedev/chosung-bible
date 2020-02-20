@@ -9,7 +9,7 @@
           :search="search"
           :get-result-value="getResultValue"
           :autoSelect="true"
-          placeholder="ㅊㅅㄱ123, ctr123"
+          placeholder="ㅊㅅㄱ123 또는 내용 검색"
           aria-label="Search bible"
           @submit="handleAutocompleteSubmit"
         >
