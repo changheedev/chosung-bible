@@ -131,8 +131,9 @@ export default {
   methods: {
     async getBible(searchParams) {
       try {
-        let bible;
+        let bible = [];
         if (searchParams.type === "keyword") {
+          if (!searchParams.keyword) throw new Error("Keyword is null");
           bible = await this.getBibleByKeyword(searchParams);
         } else bible = await this.getBibleByMeta(searchParams);
 
