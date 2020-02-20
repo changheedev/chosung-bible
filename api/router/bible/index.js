@@ -46,6 +46,43 @@ router.get(
   }
 );
 
+/**
+ * 키워드 검색, fulltext index
+ */
+router.get("", async (req, res, next) => {
+  try {
+    const keyword = decodeURIComponent(req.query.keyword);
+    const keywordTokens = keyword.split(" ");
+    const page = Number(req.query.page);
+
+    const result = await Bible.findAll({
+      where: Sequelize.literal(
+        `MATCH (content) AGAINST ('${keywordTokens.join(" ")}' in boolean mode)`
+      ),
+      order: [
+        sequelize.literal(
+          `MATCH (content) AGAINST ('"${keyword}"' in boolean mode) DESC`
+        ),
+        sequelize.literal(
+          `MATCH (content) AGAINST ('${keywordTokens
+            .map(token => `+${token}`)
+            .join(" ")}' in boolean mode) DESC`
+        ),
+        ["book", "ASC"],
+        ["chapter", "ASC"],
+        ["verse", "ASC"]
+      ],
+      offset: page * 10,
+      limit: 10
+    });
+
+    LogQueue.insertLog(req.useragent, decodeURIComponent(req.url));
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 /*성경리스트('창세기', '출애굽기',...)를 불러온다*/
 router.get("/books", async (req, res, next) => {
   try {
@@ -86,28 +123,12 @@ router.get("/metadata", async (req, res, next) => {
     let resResult = [];
 
     metaMaxChapters[0].forEach(_metaMaxChapter => {
-      /*
-    [
-      {
-        book: 1, 
-        maxChapter: 50, 
-        maxVerses: [
-          {
-            book: 1, 
-            chapter: 1, 
-            maxVerse: 31
-          }, 
-          ...
-        ]
-      }
-    ]
-    */
       resResult.push({
         book: _metaMaxChapter.book,
         maxChapter: _metaMaxChapter.maxChapter,
-        maxVerses: metaMaxVerses[0].filter(
-          _metaMaxVerse => _metaMaxVerse.book === _metaMaxChapter.book
-        )
+        maxVerses: metaMaxVerses[0]
+          .filter(_metaMaxVerse => _metaMaxVerse.book === _metaMaxChapter.book)
+          .map(_filteredMetaMaxVerse => _filteredMetaMaxVerse.maxVerse)
       });
     });
 

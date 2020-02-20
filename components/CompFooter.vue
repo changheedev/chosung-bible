@@ -10,7 +10,7 @@
       >
       /
       <b-button variant="tranparent" size="sm" v-b-modal.modal-review
-        >메세지</b-button
+        >의견보내기</b-button
       >
       <b-modal
         id="modal-review"

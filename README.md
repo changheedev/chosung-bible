@@ -1,23 +1,37 @@
-# chosung-bible
+# 초성성경
 
-> 초성을 이용한 성경 검색 개발 프로젝트
+## 개요
 
-## Build Setup
+여러번의 선택과 입력이 필요한 기존의 성경 검색 방식의 불편함을 개선하기 위해 초성과 숫자정보를 합친 한줄 입력으로 성경을 검색할 수 있는 서비스 개발
 
-``` bash
-# install dependencies
-$ npm install # Or yarn install
+[www.chosungbible.com](www.chosungbible.com)
 
-# serve with hot reload at localhost:3000
-$ npm run dev
+<br>
 
-# build for production and launch server
-$ npm run build
-$ npm start
+## 개발환경
 
-# generate static project
-$ npm run generate
-```
+- Nuxt.js
 
-For detailed explanation on how things work, checkout the [Nuxt.js docs](https://github.com/nuxt/nuxt.js).
+- express
 
+- MariaDB / Sequelize
+
+- MongoDB / Mongoose
+
+<br>
+
+## 기능소개
+
+- 초성과 숫자를 이용한 성경 검색
+
+  - 트라이 자료구조를 이용하여 입력에 따라 검색 가능한 성경 리스트 생성
+
+  - 숫자 입력의 경우의 수와 성경 메타 데이터를 이용해 생성된 성경 리스트 마다 검색 가능한 경우의 수를 생성 (각 성경의 장, 절 범위 안에 있는 데이터만 리스트로 생성)
+
+  - 예시) ㅊ123 => 창세기 1장 23절, 창세기 12장 3절, 출애굽기 12장 3절
+
+* 문장으로 입력시 내용으로 검색
+
+  - 입력 형태를 분석하여 초성 검색과 내용 검색을 분리
+
+  - 검색 결과를 향상시키기 위하여 like 검색 대신 fulltext index search 사용
