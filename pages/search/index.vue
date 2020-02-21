@@ -1,27 +1,41 @@
 <template>
   <section class="container min-vh-100">
     <b-navbar fixed="top" variant="light" type="light" class="shadow-sm">
-      <b-navbar-brand to="/"
-        ><b-icon-arrow-left font-scale="1.5"></b-icon-arrow-left
-      ></b-navbar-brand>
-      <b-navbar-nav class="ml-auto">
-        <b-button-group>
-          <b-button
-            class="disable-dbl-tap-zoom"
-            variant="outline-dark"
-            size="sm"
-            @click="decreaseFontSize"
-            :disabled="disableDecFontSize"
-            ><b-icon-dash></b-icon-dash
+      <b-navbar-nav class="nav-show-searchbar" v-if="isShowSearchInput">
+        <comp-autocomplete
+          class="el-autocomplete"
+          @search="handleSearch"
+        ></comp-autocomplete>
+        <b-button variant="transparent" @click="hideSearchInput"
+          ><b-icon-x-circle></b-icon-x-circle
+        ></b-button>
+      </b-navbar-nav>
+      <b-navbar-nav class="nav-hide-searchbar" v-else>
+        <b-navbar-brand to="/"
+          ><b-icon-arrow-left font-scale="1.5"></b-icon-arrow-left
+        ></b-navbar-brand>
+        <b-navbar-nav class="ml-auto">
+          <b-button variant="transparent" @click="showSearchInput"
+            ><b-icon-search></b-icon-search
           ></b-button>
-          <b-button
-            class="disable-dbl-tap-zoom"
-            variant="outline-dark"
-            size="sm"
-            @click="increaseFontSize"
-            ><b-icon-plus></b-icon-plus
-          ></b-button>
-        </b-button-group>
+          <b-button-group>
+            <b-button
+              class="disable-dbl-tap-zoom"
+              variant="outline-dark"
+              size="sm"
+              @click="decreaseFontSize"
+              :disabled="disableDecFontSize"
+              ><b-icon-dash></b-icon-dash
+            ></b-button>
+            <b-button
+              class="disable-dbl-tap-zoom"
+              variant="outline-dark"
+              size="sm"
+              @click="increaseFontSize"
+              ><b-icon-plus></b-icon-plus
+            ></b-button>
+          </b-button-group>
+        </b-navbar-nav>
       </b-navbar-nav>
     </b-navbar>
 
@@ -58,10 +72,23 @@
 </template>
 
 <script>
-import { BIconArrowLeft, BIconPlus, BIconDash } from "bootstrap-vue";
-
+import {
+  BIconArrowLeft,
+  BIconPlus,
+  BIconDash,
+  BIconSearch,
+  BIconXCircle
+} from "bootstrap-vue";
+import CompAutocomplete from "~/components/CompAutocomplete";
 export default {
-  components: { BIconArrowLeft, BIconPlus, BIconDash },
+  components: {
+    BIconArrowLeft,
+    BIconPlus,
+    BIconDash,
+    BIconSearch,
+    BIconXCircle,
+    CompAutocomplete
+  },
   asyncData({ query, store }) {
     const books = store.getters.books;
     const searchParams = query;
@@ -76,7 +103,8 @@ export default {
     return {
       searchedData: [],
       message: "검색 중입니다...",
-      fontSize: 16
+      fontSize: 16,
+      isShowSearchInput: false
     };
   },
   computed: {
@@ -165,6 +193,18 @@ export default {
     },
     increaseFontSize() {
       this.fontSize++;
+    },
+    handleSearch(query) {
+      this.hideSearchInput();
+      this.searchedData = [];
+      this.searchParams = query;
+      this.getBible(this.searchParams);
+    },
+    showSearchInput() {
+      this.isShowSearchInput = true;
+    },
+    hideSearchInput() {
+      this.isShowSearchInput = false;
     }
   }
 };
@@ -207,5 +247,19 @@ export default {
 }
 .bible-content {
   line-height: 1.8rem;
+}
+
+.nav-hide-searchbar {
+  width: 100%;
+}
+
+.nav-show-searchbar {
+  width: 100%;
+  max-width: 500px;
+  margin-left: auto;
+}
+
+.el-autocomplete {
+  width: 100%;
 }
 </style>
