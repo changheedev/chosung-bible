@@ -4,7 +4,8 @@
       <b-col cols="12">
         <h1 class="title">초성 성경</h1>
         <p class="subtitle">초성과 숫자로 간편하게 성경을 검색해보세요</p>
-        <comp-autocomplete class="el-autocomplete"> </comp-autocomplete>
+        <comp-autocomplete class="el-autocomplete" @search="handleSearch">
+        </comp-autocomplete>
       </b-col>
       <b-col cols="12" class="dummy"> </b-col>
     </b-row>
@@ -34,6 +35,9 @@ export default {
         });
         localStorage.setItem("searchHistory", JSON.stringify(histories));
       }
+    },
+    handleSearch(query) {
+      this.$router.push({ path: "/search", query: query });
     }
   }
 };

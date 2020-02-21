@@ -200,8 +200,8 @@ export default {
           verse: result.data.verse
         };
       }
-
-      this.$router.push({ path: "/search", query: query });
+      query.page = 0;
+      this.$emit("search", query);
     },
     getHistoryFromLocalStorage() {
       return JSON.parse(localStorage.getItem("searchHistory"));
