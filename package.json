@@ -1,6 +1,6 @@
 {
   "name": "chosung-bible",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "초성을 이용한 성경 검색 개발 프로젝트",
   "author": "Changehee Choi <changhee.dev@gmail.com>",
   "private": true,
