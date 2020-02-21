@@ -64,23 +64,8 @@ export default {
   components: { BIconArrowLeft, BIconPlus, BIconDash },
   asyncData({ query, store }) {
     const books = store.getters.books;
-    let searchParams = {};
-
-    if (query.type === "keyword") {
-      searchParams = {
-        type: "keyword",
-        keyword: query.keyword,
-        page: query.page || 0
-      };
-    } else {
-      searchParams = {
-        type: "meta",
-        book: query.book || 1,
-        chapter: query.chapter || 1,
-        verse: query.verse || 1,
-        page: query.page || 0
-      };
-    }
+    const searchParams = query;
+    searchParams.page = query.page || 0;
 
     return {
       books: books,
