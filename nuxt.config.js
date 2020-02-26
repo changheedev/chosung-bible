@@ -9,14 +9,15 @@ module.exports = {
     htmlAttrs: {
       lang: "ko-KR"
     },
-    title: "초성성경 - 초성과 숫자로 간편한 성경검색",
+    title: "초성성경 - 간편한 성경검색",
     meta: [
       { charset: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       {
         hid: "description",
         name: "description",
-        content: "초성과 숫자로 간편하게 성경을 검색해보세요."
+        content:
+          "초성성경은 초성과 숫자만 입력하여 성경을 간편하게 검색할 수 있는 서비스입니다. 초성과 숫자대신 단어 또는 문장을 입력하여 성경의 내용을 검색하는 서비스도 제공합니다."
       },
       { name: "og:type", content: "website" },
       { name: "og:title", content: "초성성경" },
@@ -25,7 +26,11 @@ module.exports = {
         content: "초성과 숫자로 간편하게 성경을 검색해보세요."
       },
       { name: "og:image", content: "/ogImage.png" },
-      { name: "og:url", content: "http://chosungbible.com" }
+      { name: "og:url", content: "https://www.chosungbible.com" },
+      {
+        name: "naver-site-verification",
+        content: process.env.NAVER_KEY
+      }
     ],
     link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }]
   },
