@@ -73,10 +73,10 @@ export default {
 }
 
 .el-autocomplete::before {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   top: -20px;
   right: 5px;
-  color: #999;
+  color: #888;
   position: absolute;
   content: "DB - 개역한글성경";
 }
