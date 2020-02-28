@@ -81,12 +81,13 @@ const createChosungMap = books => {
 export const actions = {
   async nuxtServerInit({ commit }, { app }) {
     try {
-      const bibleMeta = await app.$axios.get("/api/bible/metadata");
+      const [bibleMeta, books] = await Promise.all([
+        app.$axios.get("/api/bible/metadata"),
+        app.$axios.get("/api/bible/books")
+      ]);
       commit("setMetadata", bibleMeta);
-      console.log("Load metadata has been established successfully.");
-
-      const books = await app.$axios.get("/api/bible/books");
       commit("setBooks", books);
+      console.log("Get bible data has been established successfully.");
 
       const chosungMap = createChosungMap(books);
       commit("setChosung", chosungMap);
