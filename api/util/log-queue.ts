@@ -1,6 +1,7 @@
 import SearchLog from '../database/mongodb/models/SearchLog';
 import Queue from './queue';
 import UserAgent from '../models/UserAgent';
+import { Details } from 'express-useragent';
 
 class LogQueue {
   private static _instance: LogQueue;
@@ -36,7 +37,7 @@ class LogQueue {
     this._timer = null;
   }
 
-  insertLog(ua: Object, query: Object) {
+  insertLog(ua: Details | undefined, query: Object) {
     const userAgent = new UserAgent(ua);
 
     Queue.enqueue({

@@ -5,18 +5,19 @@ import BibleService from './bible-service';
 const router = express.Router();
 
 //초기화 데이터 캐시
-const cache = {};
+let cacheMeta: Object;
 
 /* 성경 리스트와 메타데이터를 가져온다. */
 router.get('/metadata', async (req, res, next) => {
   try {
+    console.log(cacheMeta);
     //캐시된 데이터가 있다면 사용
-    if (cache['metadata']) {
-      res.status(200).json(cache['metadata']);
+    if (cacheMeta) {
+      res.status(200).json(cacheMeta);
       return;
     }
     const metadata = await BibleService.getBibleMeta();
-    cache['metadata'] = metadata;
+    cacheMeta = { ...metadata };
     res.status(200).json(metadata);
   } catch (err) {
     next(err);
@@ -33,7 +34,7 @@ router.get('/book/:book/chapter/:chapter/verse/:verse', async (req, res, next) =
 
     const result = await BibleService.searchBibleByMeta(book, chapter, verse, page);
 
-    LogQueue.insertLog({ ...req.useragent }, { book: book, chapter: chapter, verse: verse, page: page });
+    LogQueue.insertLog(req.useragent, { book: book, chapter: chapter, verse: verse, page: page });
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -48,7 +49,7 @@ router.get('', async (req, res, next) => {
 
     const result = await BibleService.searchBibleByKeyword(keyword, page);
 
-    LogQueue.insertLog({ ...req.useragent }, { keyword: keyword, page: page });
+    LogQueue.insertLog(req.useragent, { keyword: keyword, page: page });
     res.status(200).json(result);
   } catch (err) {
     next(err);

@@ -1,3 +1,5 @@
+import { Details } from 'express-useragent';
+
 export default class UserAgent {
   private device: string;
   private browser: string;
@@ -5,17 +7,25 @@ export default class UserAgent {
   private os: string;
   private platform: string;
 
-  constructor(userAgent) {
-    if (userAgent.isMobile) this.device = 'mobile';
-    else if (userAgent.isTablet) this.device = 'tablet';
-    else if (userAgent.isDesktop) this.device = 'desktop';
-    else if (userAgent.isBot) this.device = 'bot';
-    else this.device = 'unkown';
+  constructor(userAgent: Details | undefined) {
+    if (!userAgent) {
+      this.device = 'unknown';
+      this.browser = 'unknown';
+      this.version = 'unknown';
+      this.os = 'unknown';
+      this.platform = 'unknown';
+    } else {
+      if (userAgent.isMobile) this.device = 'mobile';
+      else if (userAgent.isTablet) this.device = 'tablet';
+      else if (userAgent.isDesktop) this.device = 'desktop';
+      else if (userAgent.isBot) this.device = 'bot';
+      else this.device = 'unknown';
 
-    this.browser = userAgent.browser;
-    this.version = userAgent.version;
-    this.os = userAgent.os;
-    this.platform = userAgent.platform;
+      this.browser = userAgent.browser;
+      this.version = userAgent.version;
+      this.os = userAgent.os;
+      this.platform = userAgent.platform;
+    }
   }
 
   toObject(): Object {

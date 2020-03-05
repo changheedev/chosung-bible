@@ -6,8 +6,6 @@
     "rootDir": "./api",
     "removeComments": true,
     "strict": true,
-    "noImplicitAny": false,
-    "allowJs": true,
     "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true
   },

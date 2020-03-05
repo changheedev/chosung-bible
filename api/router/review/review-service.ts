@@ -12,7 +12,7 @@ class ReviewService {
     return ReviewService._instance;
   }
 
-  async createReview(ua: Object, content: string) {
+  async createReview(ua: Details | undefined, content: string) {
     try {
       const useragent = new UserAgent(ua);
       const newReview = {
