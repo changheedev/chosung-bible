@@ -1,6 +1,6 @@
 import express = require('express');
 import LogQueue from '../../util/log-queue';
-import BibleService from './bibleService';
+import BibleService from './bible-service';
 
 const router = express.Router();
 

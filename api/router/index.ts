@@ -2,8 +2,8 @@ import express = require('express');
 import { Request, Response, NextFunction } from 'express';
 import bible from './bible';
 import review from './review';
-import ErrorLog from '../database/mongodb/models/error-log';
-import UserAgent from '../models/user-agent';
+import ErrorLog from '../database/mongodb/models/ErrorLog';
+import UserAgent from '../models/UserAgent';
 
 const router = express.Router();
 

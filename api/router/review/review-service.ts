@@ -1,5 +1,5 @@
-import Review from '../../database/mongodb/models/review';
-import UserAgent from '../../models/user-agent';
+import Review from '../../database/mongodb/models/Review';
+import UserAgent from '../../models/UserAgent';
 import { Details } from 'express-useragent';
 
 class ReviewService {

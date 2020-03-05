@@ -1,6 +1,6 @@
-import SearchLog from '../database/mongodb/models/search-log';
+import SearchLog from '../database/mongodb/models/SearchLog';
 import Queue from './queue';
-import UserAgent from '../models/user-agent';
+import UserAgent from '../models/UserAgent';
 
 class LogQueue {
   private static _instance: LogQueue;

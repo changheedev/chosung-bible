@@ -1,7 +1,7 @@
 import { Sequelize, Op } from 'sequelize';
 import database from '../../database/sequelize';
-import Bible from '../../database/sequelize/models/bible';
-import Book from '../../database/sequelize/models/book';
+import Bible from '../../database/sequelize/models/Bible';
+import Book from '../../database/sequelize/models/Book';
 
 interface BibleMetadata {
   book: number;
