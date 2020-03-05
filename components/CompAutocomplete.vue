@@ -11,8 +11,8 @@
 </template>
 
 <script>
-const TrieSearch = require("trie-search");
-const Hangul = require("hangul-js");
+const TrieSearch = require('trie-search');
+const Hangul = require('hangul-js');
 export default {
   data() {
     return {
@@ -25,7 +25,7 @@ export default {
       this.loadMetadata();
       this.createTrie();
     } catch (err) {
-      throw new Error("초기 데이터를 로드하는데 실패했습니다.");
+      throw new Error('초기 데이터를 로드하는데 실패했습니다.');
     }
   },
   methods: {
@@ -34,12 +34,14 @@ export default {
     },
     createTrie() {
       const chosungMap = this.$store.getters.chosung;
-      this.trie = new TrieSearch("irrelevantForMapMethod");
+      this.trie = new TrieSearch('irrelevantForMapMethod');
       chosungMap.forEach((value, key, mapObject) => this.trie.map(key, value));
     },
     isPossibleHasNumberInChosung(input) {
       const startTwoWord = input.substring(0, 2);
-      if (startTwoWord === "ㅇㅎ" || startTwoWord === "dg") return true;
+      if (startTwoWord === 'ㅇㅎ' || startTwoWord === 'dg') {
+        return true;
+      }
       return false;
     },
     /* 입력의 초성과 숫자(장,절) 정보를 분리 */
@@ -54,9 +56,7 @@ export default {
         //case1: suffix의 첫 숫자를 초성으로 사용 => 요한1서, 요한2서... 등의 처리를 위함
         if (this.isPossibleHasNumberInChosung(input)) {
           num.push(suffixNum[0].substring(1));
-          text.push(
-            input.substring(0, input.length - suffixNum[0].substring(1).length)
-          );
+          text.push(input.substring(0, input.length - suffixNum[0].substring(1).length));
         }
         //case2: suffix 숫자를 모두 장,절 정보로 사용
         num.push(suffixNum[0]);
@@ -73,11 +73,13 @@ export default {
       };
     },
     isVerseStartWithZero(verse) {
-      return verse.charAt(0) === "0";
+      return verse.charAt(0) === '0';
     },
     parseNum(num) {
       //숫자가 입력되지 않은 경우
-      if (!num) return [[1, 1]];
+      if (!num) {
+        return [[1, 1]];
+      }
 
       let numstr = num.toString();
       const result = [];
@@ -87,13 +89,12 @@ export default {
       for (let lenOfChapter = 1; lenOfChapter <= maxLen; lenOfChapter++) {
         let chapter = numstr.substring(0, lenOfChapter);
         // 길이가 3이하인 numstr을 모두 chapter로 자르면 verse가 없게 되므로 1로 설정해준다
-        let verse = numstr.substring(lenOfChapter)
-          ? numstr.substring(lenOfChapter)
-          : "1";
+        let verse = numstr.substring(lenOfChapter) ? numstr.substring(lenOfChapter) : '1';
 
         // 502 => 5, 02 로 나눠지지 않도록 verse 가 0으로 시작하는 경우는 제외시켜준다.
-        if (!this.isVerseStartWithZero(verse))
+        if (!this.isVerseStartWithZero(verse)) {
           result.push([Number(chapter), Number(verse)]);
+        }
       }
       return result;
     },
@@ -102,29 +103,27 @@ export default {
     },
     isRangeChapter(book, chapter) {
       const _metadata = this.getBookMetadata(book);
-      if (chapter > 0 && chapter <= _metadata.maxChapter) return true;
+      if (chapter > 0 && chapter <= _metadata.chapters) {
+        return true;
+      }
       return false;
     },
     isRangeVerse(book, chapter, verse) {
       const _metadata = this.getBookMetadata(book);
-      if (verse > 0 && verse <= _metadata.maxVerses[chapter - 1]) return true;
+      if (verse > 0 && verse <= _metadata.verses[chapter - 1]) {
+        return true;
+      }
       return false;
     },
     makeAutoCompleteList(chosung, num) {
       let result = [];
       const parsedNum = this.parseNum(num);
-
       this.trie.get(chosung).forEach(book => {
         parsedNum.forEach(([chapter, verse]) => {
           // book 의 최대 chapter, 최대 verse 를 벗어나지 않는 경우에만 리스트에 넣는다
-          if (
-            this.isRangeChapter(book.id, chapter) &&
-            this.isRangeVerse(book.id, chapter, verse)
-          ) {
+          if (this.isRangeChapter(book.id, chapter) && this.isRangeVerse(book.id, chapter, verse)) {
             result.push({
-              text: `${book.name} ${chapter}${
-                book.id === 19 ? "편" : "장"
-              } ${verse}절`,
+              text: `${book.name} ${chapter}${book.id === 19 ? '편' : '장'} ${verse}절`,
               book: book.id,
               chapter: chapter,
               verse: verse
@@ -136,10 +135,7 @@ export default {
     },
     findIndexByMeta(from, meta) {
       return from.findIndex(
-        item =>
-          item.data.book === meta.book &&
-          item.data.chapter === meta.chapter &&
-          item.data.verse === meta.verse
+        item => item.data.book === meta.book && item.data.chapter === meta.chapter && item.data.verse === meta.verse
       );
     },
     findIndexByKeyword(from, keyword) {
@@ -155,7 +151,7 @@ export default {
 
         //초성이 아닌 문장이 입력되었을때 키워드 검색 처리
         if (Hangul.isComplete(input)) {
-          resolve([{ type: "keyword", data: { keyword: input } }]);
+          resolve([{ type: 'keyword', data: { keyword: input } }]);
         }
 
         const parsedInput = this.parseInput(input);
@@ -166,28 +162,30 @@ export default {
 
         for (let i = 0; i < parsedChosung.length; i++) {
           //결과 리스트에 없는 아이템만 리스트에 넣는다. (중복 결과 방지)
-          this.makeAutoCompleteList(parsedChosung[i], parsedNum[i]).forEach(
-            newItem => {
-              if (this.findIndexByMeta(result, newItem) === -1)
-                result.push({ type: "meta", data: newItem });
+          this.makeAutoCompleteList(parsedChosung[i], parsedNum[i]).forEach(newItem => {
+            if (this.findIndexByMeta(result, newItem) === -1) {
+              result.push({ type: 'meta', data: newItem });
             }
-          );
+          });
         }
-
         resolve(result);
       });
     },
     getResultValue(result) {
-      if (result.type === "keyword") return result.data.keyword;
+      if (result.type === 'keyword') {
+        return result.data.keyword;
+      }
       return result.data.text;
     },
     handleAutocompleteSubmit(result) {
-      if (!result) return;
+      if (!result) {
+        return;
+      }
       this.saveSearchHistory(result);
 
       let query = {};
 
-      if (result.type === "keyword") {
+      if (result.type === 'keyword') {
         query = {
           type: result.type,
           keyword: encodeURIComponent(result.data.keyword)
@@ -201,27 +199,33 @@ export default {
         };
       }
       query.page = 0;
-      this.$emit("search", query);
+      this.$emit('search', query);
     },
     getHistoryFromLocalStorage() {
-      return JSON.parse(localStorage.getItem("searchHistory"));
+      return JSON.parse(localStorage.getItem('searchHistory'));
     },
     getOrDefaultHistoryFromLocalStorage() {
-      return JSON.parse(localStorage.getItem("searchHistory")) || new Array();
+      return JSON.parse(localStorage.getItem('searchHistory')) || new Array();
     },
     removeDuplHistory(histories, newHistory) {
       let index = 0;
-      if (newHistory.type === "keyword")
+      if (newHistory.type === 'keyword') {
         index = this.findIndexByKeyword(histories, newHistory.data.keyword);
-      else index = this.findIndexByMeta(histories, newHistory.data);
+      } else {
+        index = this.findIndexByMeta(histories, newHistory.data);
+      }
 
       //중복된 기록 삭제
-      if (index !== -1) histories.splice(index, 1);
+      if (index !== -1) {
+        histories.splice(index, 1);
+      }
     },
     updateHistoryToLocalStorage(histories) {
       //히스토리는 10개 까지만 저장
-      if (histories.length > 10) histories.pop();
-      localStorage.setItem("searchHistory", JSON.stringify(histories));
+      if (histories.length > 10) {
+        histories.pop();
+      }
+      localStorage.setItem('searchHistory', JSON.stringify(histories));
     },
     saveSearchHistory(newHistory) {
       const histories = this.getOrDefaultHistoryFromLocalStorage();
