@@ -2,22 +2,13 @@
   <section class="container min-vh-100">
     <b-navbar fixed="top" variant="light" type="light" class="shadow-sm">
       <b-navbar-nav class="nav-show-searchbar" v-if="isShowSearchInput">
-        <comp-autocomplete
-          class="el-autocomplete"
-          @search="handleSearch"
-        ></comp-autocomplete>
-        <b-button variant="transparent" @click="hideSearchInput"
-          ><b-icon-x-circle></b-icon-x-circle
-        ></b-button>
+        <comp-autocomplete class="el-autocomplete" @search="handleSearch"></comp-autocomplete>
+        <b-button variant="transparent" @click="hideSearchInput"><b-icon-x-circle></b-icon-x-circle></b-button>
       </b-navbar-nav>
       <b-navbar-nav class="nav-hide-searchbar" v-else>
-        <b-navbar-brand to="/"
-          ><b-icon-arrow-left font-scale="1.5"></b-icon-arrow-left
-        ></b-navbar-brand>
+        <b-navbar-brand to="/"><b-icon-arrow-left font-scale="1.5"></b-icon-arrow-left></b-navbar-brand>
         <b-navbar-nav class="ml-auto">
-          <b-button variant="transparent" @click="showSearchInput"
-            ><b-icon-search></b-icon-search
-          ></b-button>
+          <b-button variant="transparent" @click="showSearchInput"><b-icon-search></b-icon-search></b-button>
           <b-button-group>
             <b-button
               class="disable-dbl-tap-zoom"
@@ -27,11 +18,7 @@
               :disabled="disableDecFontSize"
               ><b-icon-dash></b-icon-dash
             ></b-button>
-            <b-button
-              class="disable-dbl-tap-zoom"
-              variant="outline-dark"
-              size="sm"
-              @click="increaseFontSize"
+            <b-button class="disable-dbl-tap-zoom" variant="outline-dark" size="sm" @click="increaseFontSize"
               ><b-icon-plus></b-icon-plus
             ></b-button>
           </b-button-group>
@@ -45,26 +32,16 @@
           <div class="bible-metadata">
             {{ makeMetadataText(item) }}
           </div>
-          <div
-            :style="{ fontSize: fontSize + 'px' }"
-            class="bible-content shadow-sm rounded p-3"
-          >
-            <text-highlight
-              :queries="tokenSet"
-              v-if="searchParams.type === 'keyword'"
-              >{{ item.content }}</text-highlight
-            >
+          <div :style="{ fontSize: fontSize + 'px' }" class="bible-content shadow-sm rounded p-3">
+            <text-highlight :queries="tokenSet" v-if="searchParams.type === 'keyword'">{{
+              item.content
+            }}</text-highlight>
             <span v-else>{{ item.content }}</span>
           </div>
         </li>
       </ul>
       <div class="text-center">
-        <b-button
-          class="btn-more mt-5 px-5"
-          variant="primary"
-          @click="getBibleNextPage()"
-          >더보기</b-button
-        >
+        <b-button class="btn-more mt-5 px-5" variant="primary" @click="getBibleNextPage()">더보기</b-button>
       </div>
     </div>
     <div class="state-message" v-else>{{ message }}</div>
@@ -72,14 +49,8 @@
 </template>
 
 <script>
-import {
-  BIconArrowLeft,
-  BIconPlus,
-  BIconDash,
-  BIconSearch,
-  BIconXCircle
-} from "bootstrap-vue";
-import CompAutocomplete from "~/components/CompAutocomplete";
+import { BIconArrowLeft, BIconPlus, BIconDash, BIconSearch, BIconXCircle } from 'bootstrap-vue';
+import CompAutocomplete from '~/components/CompAutocomplete';
 export default {
   components: {
     BIconArrowLeft,
@@ -102,7 +73,7 @@ export default {
   data() {
     return {
       searchedData: [],
-      message: "검색 중입니다...",
+      message: '검색 중입니다...',
       fontSize: 16,
       isShowSearchInput: false
     };
@@ -118,11 +89,11 @@ export default {
     },
     tokenSet() {
       let tokenSet = [];
-      if (this.searchParams.type !== "keyword") return tokenSet;
+      if (this.searchParams.type !== 'keyword') return tokenSet;
 
       const keyword = decodeURIComponent(this.searchParams.keyword);
 
-      const keywordTokens = keyword.split(" ");
+      const keywordTokens = keyword.split(' ');
 
       tokenSet.push(keyword);
       tokenSet = tokenSet.concat(keywordTokens);
@@ -131,7 +102,7 @@ export default {
         .filter(token => token.length >= 2)
         .forEach(token => {
           for (let i = 1; i <= token.length - 1; i++) {
-            const newToken = token.substring(0, i) + " " + token.substring(i);
+            const newToken = token.substring(0, i) + ' ' + token.substring(i);
             tokenSet.push(newToken);
           }
         });
@@ -144,16 +115,16 @@ export default {
   methods: {
     async getBible(searchParams) {
       try {
-        let bible = [];
-        if (searchParams.type === "keyword") {
-          if (!searchParams.keyword) throw new Error("Keyword is null");
+        let bible;
+        if (searchParams.type === 'keyword') {
+          if (!searchParams.keyword) throw new Error('Keyword is null');
           bible = await this.getBibleByKeyword(searchParams);
         } else bible = await this.getBibleByMeta(searchParams);
 
-        if (bible.length == 0) this.message = "검색 결과가 없습니다.";
+        if (bible.length == 0) this.message = '검색 결과가 없습니다.';
         this.searchedData = this.searchedData.concat(bible);
       } catch (err) {
-        this.message = "검색 과정에서 오류가 발생했습니다.";
+        this.message = '검색 과정에서 오류가 발생했습니다.';
       }
     },
     getBibleByMeta({ type, book, chapter, verse, page }) {
@@ -170,7 +141,7 @@ export default {
     getBibleByKeyword({ type, keyword, page }) {
       return new Promise((resolve, reject) => {
         this.$axios
-          .get("/api/bible", {
+          .get('/api/bible', {
             params: {
               keyword: keyword,
               page: page
@@ -184,9 +155,7 @@ export default {
       this.getBible(this.searchParams);
     },
     makeMetadataText(item) {
-      return `${this.books[item.book - 1].name} ${item.chapter}${
-        item.book === 19 ? "편" : "장"
-      } ${item.verse}절`;
+      return `${this.books[item.book - 1].name} ${item.chapter}${item.book === 19 ? '편' : '장'} ${item.verse}절`;
     },
     decreaseFontSize() {
       if (this.fontSize > 16) this.fontSize--;
