@@ -12,7 +12,7 @@ class Database {
       !process.env.DB_HOST ||
       !process.env.DB_PORT
     )
-      throw new Error('Not exist sequelize options');
+      throw new Error('Not exist sequelize config');
 
     //connect db
     if (!Database.instance) {

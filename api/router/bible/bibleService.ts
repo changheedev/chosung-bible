@@ -74,15 +74,15 @@ class BibleService {
     }
   }
 
-  private paramIsNumber(params: number[]) {
-    params.forEach(param => {
-      if (Number.isNaN(param)) return false;
-    });
-    return true;
+  private hasNaN(params: number[]) {
+    for (const item of params) {
+      if (Number.isNaN(item)) return true;
+    }
+    return false;
   }
 
   async searchBibleByMeta(book: number, chapter: number, verse: number, page: number) {
-    if (!this.paramIsNumber([book, chapter, verse, page])) throw new Error('Params must be number');
+    if (this.hasNaN([book, chapter, verse, page])) throw new Error('Params must be number');
 
     //사용자가 입력한 성경부터 10개의 데이터를 가져온다
     //사용자가 입력한 파라미터를 서브쿼리로 이용
@@ -105,7 +105,7 @@ class BibleService {
   }
 
   async searchBibleByKeyword(keyword: string, page: number) {
-    if (!this.paramIsNumber([page])) throw new Error('Page is must be number');
+    if (this.hasNaN([page])) throw new Error('Page is must be number');
 
     try {
       const keywordTokens = keyword.split(' ');

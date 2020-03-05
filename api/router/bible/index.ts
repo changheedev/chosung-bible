@@ -33,7 +33,7 @@ router.get('/book/:book/chapter/:chapter/verse/:verse', async (req, res, next) =
 
     const result = await BibleService.searchBibleByMeta(book, chapter, verse, page);
 
-    LogQueue.insertLog(req.useragent, { book: book, chapter: chapter, verse: verse, page: page });
+    LogQueue.insertLog({ ...req.useragent }, { book: book, chapter: chapter, verse: verse, page: page });
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -48,7 +48,7 @@ router.get('', async (req, res, next) => {
 
     const result = await BibleService.searchBibleByKeyword(keyword, page);
 
-    LogQueue.insertLog(req.useragent, { keyword: keyword, page: page });
+    LogQueue.insertLog({ ...req.useragent }, { keyword: keyword, page: page });
     res.status(200).json(result);
   } catch (err) {
     next(err);
