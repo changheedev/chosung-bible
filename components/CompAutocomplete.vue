@@ -37,43 +37,40 @@ export default {
       this.trie = new TrieSearch('irrelevantForMapMethod');
       chosungMap.forEach((value, key, mapObject) => this.trie.map(key, value));
     },
-    isPossibleHasNumberInChosung(input) {
+    isVerseStartWithZero(verse) {
+      return verse.charAt(0) === '0';
+    },
+    isRangeChapter(book, chapter) {
+      const _metadata = this.getBookMetadata(book);
+      if (chapter > 0 && chapter <= _metadata.chapters) {
+        return true;
+      }
+      return false;
+    },
+    isRangeVerse(book, chapter, verse) {
+      const _metadata = this.getBookMetadata(book);
+      if (verse > 0 && verse <= _metadata.verses[chapter - 1]) {
+        return true;
+      }
+      return false;
+    },
+    hasNumberInChosung(input) {
       const startTwoWord = input.substring(0, 2);
       if (startTwoWord === 'ㅇㅎ' || startTwoWord === 'dg') {
         return true;
       }
       return false;
     },
-    /* 입력의 초성과 숫자(장,절) 정보를 분리 */
-    parseInput(input) {
-      const suffixNum = input.match(/\d+$/g);
-
-      let text = [];
-      let num = [];
-
-      //input의 suffix가 숫자인 경우 2가지 경우의 결과를 합쳐서 반환
-      if (suffixNum) {
-        //case1: suffix의 첫 숫자를 초성으로 사용 => 요한1서, 요한2서... 등의 처리를 위함
-        if (this.isPossibleHasNumberInChosung(input)) {
-          num.push(suffixNum[0].substring(1));
-          text.push(input.substring(0, input.length - suffixNum[0].substring(1).length));
-        }
-        //case2: suffix 숫자를 모두 장,절 정보로 사용
-        num.push(suffixNum[0]);
-        text.push(input.substring(0, input.length - suffixNum[0].length));
-      }
-      //case3: input의 suffix가 숫자가 아닌 경우
-      else {
-        text.push(input);
-        num.push(null);
-      }
-      return {
-        chosung: text,
-        num: num
-      };
+    getBookMetadata(book) {
+      return this.metadata[book - 1];
     },
-    isVerseStartWithZero(verse) {
-      return verse.charAt(0) === '0';
+    findIndexByMeta(from, meta) {
+      return from.findIndex(
+        item => item.data.book === meta.book && item.data.chapter === meta.chapter && item.data.verse === meta.verse
+      );
+    },
+    findIndexByKeyword(from, keyword) {
+      return from.findIndex(item => item.data.keyword === keyword);
     },
     parseNum(num) {
       //숫자가 입력되지 않은 경우
@@ -98,22 +95,33 @@ export default {
       }
       return result;
     },
-    getBookMetadata(book) {
-      return this.metadata[book - 1];
-    },
-    isRangeChapter(book, chapter) {
-      const _metadata = this.getBookMetadata(book);
-      if (chapter > 0 && chapter <= _metadata.chapters) {
-        return true;
+    /* 입력의 초성과 숫자(장,절) 정보를 분리 */
+    parseInput(input) {
+      const suffixNum = input.match(/\d+$/g);
+
+      let text = [];
+      let num = [];
+
+      //input의 suffix가 숫자인 경우 2가지 경우의 결과를 합쳐서 반환
+      if (suffixNum) {
+        //case1: suffix의 첫 숫자를 초성으로 사용 => 요한1서, 요한2서... 등의 처리를 위함
+        if (this.hasNumberInChosung(input)) {
+          num.push(suffixNum[0].substring(1));
+          text.push(input.substring(0, input.length - suffixNum[0].substring(1).length));
+        }
+        //case2: suffix 숫자를 모두 장,절 정보로 사용
+        num.push(suffixNum[0]);
+        text.push(input.substring(0, input.length - suffixNum[0].length));
       }
-      return false;
-    },
-    isRangeVerse(book, chapter, verse) {
-      const _metadata = this.getBookMetadata(book);
-      if (verse > 0 && verse <= _metadata.verses[chapter - 1]) {
-        return true;
+      //case3: input의 suffix가 숫자가 아닌 경우
+      else {
+        text.push(input);
+        num.push(null);
       }
-      return false;
+      return {
+        chosung: text,
+        num: num
+      };
     },
     makeAutoCompleteList(chosung, num) {
       let result = [];
@@ -132,14 +140,6 @@ export default {
         });
       });
       return result;
-    },
-    findIndexByMeta(from, meta) {
-      return from.findIndex(
-        item => item.data.book === meta.book && item.data.chapter === meta.chapter && item.data.verse === meta.verse
-      );
-    },
-    findIndexByKeyword(from, keyword) {
-      return from.findIndex(item => item.data.keyword === keyword);
     },
     search(input) {
       return new Promise(resolve => {
