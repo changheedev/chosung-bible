@@ -127,27 +127,19 @@ export default {
         this.message = '검색 과정에서 오류가 발생했습니다.';
       }
     },
-    getBibleByMeta({ type, book, chapter, verse, page }) {
-      return new Promise((resolve, reject) => {
-        this.$axios
-          .get(`/api/bible/book/${book}/chapter/${chapter}/verse/${verse}`, {
-            params: {
-              page: page
-            }
-          })
-          .then(result => resolve(result));
+    async getBibleByMeta({ type, book, chapter, verse, page }) {
+      return await this.$axios.get(`/api/bible/book/${book}/chapter/${chapter}/verse/${verse}`, {
+        params: {
+          page: page
+        }
       });
     },
-    getBibleByKeyword({ type, keyword, page }) {
-      return new Promise((resolve, reject) => {
-        this.$axios
-          .get('/api/bible', {
-            params: {
-              keyword: keyword,
-              page: page
-            }
-          })
-          .then(result => resolve(result));
+    async getBibleByKeyword({ type, keyword, page }) {
+      return await this.$axios.get('/api/bible', {
+        params: {
+          keyword: keyword,
+          page: page
+        }
       });
     },
     getBibleNextPage() {
