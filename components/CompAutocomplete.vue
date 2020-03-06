@@ -13,11 +13,13 @@
 <script>
 const TrieSearch = require('trie-search');
 const Hangul = require('hangul-js');
+import SearchHistory from '~/utils/search-history';
 export default {
   data() {
     return {
       trie: null,
-      metadata: null
+      metadata: null,
+      books: null
     };
   },
   mounted() {
@@ -31,6 +33,7 @@ export default {
   methods: {
     loadMetadata() {
       this.metadata = this.$store.getters.metadata;
+      this.books = this.$store.getters.books;
     },
     createTrie() {
       const chosungMap = this.$store.getters.chosung;
@@ -68,9 +71,6 @@ export default {
       return from.findIndex(
         item => item.data.book === meta.book && item.data.chapter === meta.chapter && item.data.verse === meta.verse
       );
-    },
-    findIndexByKeyword(from, keyword) {
-      return from.findIndex(item => item.data.keyword === keyword);
     },
     parseNum(num) {
       //숫자가 입력되지 않은 경우
@@ -123,6 +123,13 @@ export default {
         num: num
       };
     },
+    parseKeyword(input) {
+      return input.split(' > ');
+      if (book) {
+        return [keyword.trim(), book.trim()];
+      }
+      return [keyword.trim(), null];
+    },
     makeAutoCompleteList(chosung, num) {
       let result = [];
       const parsedNum = this.parseNum(num);
@@ -142,19 +149,22 @@ export default {
       return result;
     },
     search(input) {
+      const _input = input.trim();
       return new Promise(resolve => {
         // 입력값이 없을땐 최근 검색 기록을 보여준다
-        if (input.length < 1) {
-          const histories = this.getOrDefaultHistoryFromLocalStorage();
+        if (_input.length < 1) {
+          const histories = SearchHistory.getOrDefaultSearchHistory();
           resolve(histories);
         }
 
         //초성이 아닌 문장이 입력되었을때 키워드 검색 처리
-        if (Hangul.isComplete(input)) {
-          resolve([{ type: 'keyword', data: { keyword: input } }]);
+        if (Hangul.isComplete(_input)) {
+          //특정 성경에서 키워드를 찾기 위한 입력이 있는지 확인, ex) keyword > 성경
+          const [keyword, book] = this.parseKeyword(_input);
+          resolve([{ type: 'keyword', data: { text: _input, keyword: keyword, book: book } }]);
         }
 
-        const parsedInput = this.parseInput(input);
+        const parsedInput = this.parseInput(_input);
         const parsedChosung = parsedInput.chosung;
         const parsedNum = parsedInput.num;
 
@@ -172,23 +182,32 @@ export default {
       });
     },
     getResultValue(result) {
-      if (result.type === 'keyword') {
-        return result.data.keyword;
-      }
       return result.data.text;
     },
     handleAutocompleteSubmit(result) {
       if (!result) {
         return;
       }
-      this.saveSearchHistory(result);
+      SearchHistory.saveSearchHistory(result);
 
       let query = {};
 
       if (result.type === 'keyword') {
+        let bookId = 0;
+
+        if (result.data.book) {
+          bookId = this.books.reduce((id, item) => {
+            if (item.name === result.data.book) {
+              id = item.id;
+            }
+            return id;
+          }, 0);
+        }
+
         query = {
           type: result.type,
-          keyword: encodeURIComponent(result.data.keyword)
+          keyword: encodeURIComponent(result.data.keyword),
+          book: bookId
         };
       } else {
         query = {
@@ -200,38 +219,6 @@ export default {
       }
       query.page = 0;
       this.$emit('search', query);
-    },
-    getHistoryFromLocalStorage() {
-      return JSON.parse(localStorage.getItem('searchHistory'));
-    },
-    getOrDefaultHistoryFromLocalStorage() {
-      return JSON.parse(localStorage.getItem('searchHistory')) || new Array();
-    },
-    removeDuplHistory(histories, newHistory) {
-      let index = 0;
-      if (newHistory.type === 'keyword') {
-        index = this.findIndexByKeyword(histories, newHistory.data.keyword);
-      } else {
-        index = this.findIndexByMeta(histories, newHistory.data);
-      }
-
-      //중복된 기록 삭제
-      if (index !== -1) {
-        histories.splice(index, 1);
-      }
-    },
-    updateHistoryToLocalStorage(histories) {
-      //히스토리는 10개 까지만 저장
-      if (histories.length > 10) {
-        histories.pop();
-      }
-      localStorage.setItem('searchHistory', JSON.stringify(histories));
-    },
-    saveSearchHistory(newHistory) {
-      const histories = this.getOrDefaultHistoryFromLocalStorage();
-      this.removeDuplHistory(histories, newHistory);
-      histories.unshift(newHistory);
-      this.updateHistoryToLocalStorage(histories);
     }
   }
 };

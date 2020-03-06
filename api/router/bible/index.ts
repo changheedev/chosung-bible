@@ -10,7 +10,6 @@ let cacheMeta: Object;
 /* 성경 리스트와 메타데이터를 가져온다. */
 router.get('/metadata', async (req, res, next) => {
   try {
-    console.log(cacheMeta);
     //캐시된 데이터가 있다면 사용
     if (cacheMeta) {
       res.status(200).json(cacheMeta);
@@ -45,9 +44,10 @@ router.get('/book/:book/chapter/:chapter/verse/:verse', async (req, res, next) =
 router.get('', async (req, res, next) => {
   try {
     const keyword = decodeURIComponent(req.query.keyword);
+    const book = Number(req.query.book);
     const page = Number(req.query.page);
 
-    const result = await BibleService.searchBibleByKeyword(keyword, page);
+    const result = await BibleService.searchBibleByKeyword(keyword, book, page);
 
     LogQueue.insertLog(req.useragent, { keyword: keyword, page: page });
     res.status(200).json(result);

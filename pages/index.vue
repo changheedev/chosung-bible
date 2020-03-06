@@ -4,8 +4,7 @@
       <b-col cols="12">
         <h1 class="title">초성 성경</h1>
         <p class="subtitle">초성과 숫자로 간편하게 성경을 검색해보세요</p>
-        <comp-autocomplete class="el-autocomplete" @search="handleSearch">
-        </comp-autocomplete>
+        <comp-autocomplete class="el-autocomplete" @search="handleSearch"> </comp-autocomplete>
       </b-col>
       <b-col cols="12" class="dummy"> </b-col>
     </b-row>
@@ -13,31 +12,22 @@
 </template>
 
 <script>
-import CompAutocomplete from "~/components/CompAutocomplete";
+import CompAutocomplete from '~/components/CompAutocomplete';
+import SearchHistory from '~/utils/search-history';
 export default {
   components: { CompAutocomplete },
   created() {
-    if (process.client) this.updatePrevVersionHistories();
+    if (process.client) {
+      try {
+        SearchHistory.updatePrevVersionHistories();
+      } catch (err) {
+        SearchHistory.clearSearchHistory();
+      }
+    }
   },
   methods: {
-    //이전 버전의 포맷으로 저장된 히스토리들을 업데이트 된 포맷으로 변경
-    updatePrevVersionHistories() {
-      let histories = JSON.parse(localStorage.getItem("searchHistory"));
-      if (histories) {
-        histories = histories.map(history => {
-          if (!history.type) {
-            return {
-              type: "meta",
-              data: history
-            };
-          }
-          return history;
-        });
-        localStorage.setItem("searchHistory", JSON.stringify(histories));
-      }
-    },
     handleSearch(query) {
-      this.$router.push({ path: "/search", query: query });
+      this.$router.push({ path: '/search', query: query });
     }
   }
 };
@@ -78,7 +68,7 @@ export default {
   right: 5px;
   color: #888;
   position: absolute;
-  content: "DB - 개역한글성경";
+  content: 'DB - 개역한글성경';
 }
 
 @media (max-width: 420px) {

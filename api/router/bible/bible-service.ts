@@ -1,4 +1,4 @@
-import { Sequelize, Op } from 'sequelize';
+import { Sequelize, Op, WhereOptions } from 'sequelize';
 import database from '../../database/sequelize';
 import Bible from '../../database/sequelize/models/Bible';
 import Book from '../../database/sequelize/models/Book';
@@ -104,22 +104,54 @@ class BibleService {
     }
   }
 
-  async searchBibleByKeyword(keyword: string, page: number) {
+  private makeKeywordQuery(keyword: string): [string, string] {
+    const keywordTokens = keyword.split(' ');
+    const keywordTokensLenTwoOrGreater = keywordTokens.filter(token => token.length >= 2);
+
+    const whereQuery = `MATCH (content) AGAINST ('${keyword}' in boolean mode)`;
+
+    //1.키워드(문장)과 정확하게 일치
+    let orderQuery = `MATCH (content) AGAINST ('"${keyword}"' in boolean mode) DESC`;
+
+    //2.키워드 토큰(단어)를 모두 포함
+    orderQuery += `, MATCH (content) AGAINST ('${keywordTokens
+      .map(token => `+${token}`)
+      .join(' ')}' in boolean mode) DESC`;
+
+    if (keywordTokensLenTwoOrGreater) {
+      //3.길이가 2 이상인 단어만 모두 포함
+      orderQuery += `, MATCH (content) AGAINST ('${keywordTokensLenTwoOrGreater
+        .map(token => `+${token}`)
+        .join(' ')}' in boolean mode) DESC`;
+
+      //4.길이가 2 이상인 단어 중 하나라도 포함
+      orderQuery += `, MATCH (content) AGAINST ('${keywordTokensLenTwoOrGreater
+        .map(token => `${token}`)
+        .join(' ')}' in boolean mode) DESC`;
+    }
+
+    return [whereQuery, orderQuery];
+  }
+
+  async searchBibleByKeyword(keyword: string, book: number, page: number) {
     if (this.hasNaN([page])) throw new Error('Page is must be number');
 
     try {
-      const keywordTokens = keyword.split(' ');
+      const [whereQuery, orderQuery] = this.makeKeywordQuery(keyword);
+
+      let whereOptions: WhereOptions;
+
+      if (book === 0) {
+        whereOptions = Sequelize.literal(whereQuery);
+      } else {
+        whereOptions = {
+          [Op.and]: [{ book: book }, Sequelize.literal(whereQuery)]
+        };
+      }
+
       const result = await Bible.findAll({
-        where: Sequelize.literal(`MATCH (content) AGAINST ('${keywordTokens.join(' ')}' in boolean mode)`),
-        order: [
-          Sequelize.literal(`MATCH (content) AGAINST ('"${keyword}"' in boolean mode) DESC`),
-          Sequelize.literal(
-            `MATCH (content) AGAINST ('${keywordTokens.map(token => `+${token}`).join(' ')}' in boolean mode) DESC`
-          ),
-          ['book', 'ASC'],
-          ['chapter', 'ASC'],
-          ['verse', 'ASC']
-        ],
+        where: whereOptions,
+        order: [Sequelize.literal(orderQuery), ['book', 'ASC'], ['chapter', 'ASC'], ['verse', 'ASC']],
         offset: page * 10,
         limit: 10
       });
