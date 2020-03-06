@@ -4,11 +4,17 @@ import useragent = require('express-useragent');
 import router from './router';
 
 class Server {
+  private static _instance: Server;
   private _app!: express.Application;
-  constructor() {
+
+  private constructor() {
     try {
-      this._app = express();
-      this.middleware();
+      if (!Server._instance) {
+        this._app = express();
+        this.middleware();
+        Server._instance = this;
+      }
+      return Server._instance;
     } catch (err) {
       console.error('Server init failed.', err);
     }
@@ -26,11 +32,15 @@ class Server {
     this._app.use(router);
   }
 
+  static getInstance() {
+    return new Server();
+  }
+
   get app(): express.Application {
     return this._app;
   }
 }
 
-const server: Server = new Server();
+const server = Server.getInstance();
 
 export default server.app;
