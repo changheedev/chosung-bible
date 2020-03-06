@@ -99,7 +99,7 @@ module.exports = {
     "~/plugins/axios.js",
     { src: "~/plugins/highlight.js", ssr: false }
   ],
-  serverMiddleware: [{ path: "/api", handler: "~/api/server.js" }],
+  serverMiddleware: [{ path: "/api", handler: "~/api/server.ts" }],
   axios: {
     proxy: true
   },

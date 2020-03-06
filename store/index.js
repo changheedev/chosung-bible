@@ -1,19 +1,19 @@
-const Hangul = require("hangul-js");
+const Hangul = require('hangul-js');
 const alphabet = new Map([
-  ["ㄱ", "r"],
-  ["ㄴ", "s"],
-  ["ㄷ", "e"],
-  ["ㄹ", "f"],
-  ["ㅁ", "a"],
-  ["ㅂ", "q"],
-  ["ㅅ", "t"],
-  ["ㅇ", "d"],
-  ["ㅈ", "w"],
-  ["ㅊ", "c"],
-  ["ㅋ", "z"],
-  ["ㅌ", "x"],
-  ["ㅍ", "v"],
-  ["ㅎ", "g"]
+  ['ㄱ', 'r'],
+  ['ㄴ', 's'],
+  ['ㄷ', 'e'],
+  ['ㄹ', 'f'],
+  ['ㅁ', 'a'],
+  ['ㅂ', 'q'],
+  ['ㅅ', 't'],
+  ['ㅇ', 'd'],
+  ['ㅈ', 'w'],
+  ['ㅊ', 'c'],
+  ['ㅋ', 'z'],
+  ['ㅌ', 'x'],
+  ['ㅍ', 'v'],
+  ['ㅎ', 'g']
 ]);
 
 export const state = () => {
@@ -58,8 +58,8 @@ const createChosungMap = books => {
      *return: [['ㅊ','ㅏ','ㅇ'],['ㅅ','ㅔ'],['ㄱ','ㅣ']]
      */
     const disassembled = Hangul.disassemble(book.name, true);
-    let chosung = "";
-    let chosungAlpha = "";
+    let chosung = '';
+    let chosungAlpha = '';
 
     disassembled.forEach(word => {
       //추출한 배열의 각 첫 글자를 합친다 => 'ㅊㅅㄱ'
@@ -81,19 +81,16 @@ const createChosungMap = books => {
 export const actions = {
   async nuxtServerInit({ commit }, { app }) {
     try {
-      const [bibleMeta, books] = await Promise.all([
-        app.$axios.get("/api/bible/metadata"),
-        app.$axios.get("/api/bible/books")
-      ]);
-      commit("setMetadata", bibleMeta);
-      commit("setBooks", books);
-      console.log("Get bible data has been established successfully.");
+      const { books, metadata } = await app.$axios.get('/api/bible/metadata');
+      commit('setMetadata', metadata);
+      commit('setBooks', books);
+      console.log('Get bible data has been established successfully.');
 
       const chosungMap = createChosungMap(books);
-      commit("setChosung", chosungMap);
-      console.log("Create chosung list has been established successfully.");
+      commit('setChosung', chosungMap);
+      console.log('Create chosung list has been established successfully.');
     } catch (err) {
-      console.error("Store init failed\n", err);
+      console.error('Store init failed\n', err);
     }
   }
 };
