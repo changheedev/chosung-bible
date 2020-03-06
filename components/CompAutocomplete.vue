@@ -3,7 +3,7 @@
     :search="search"
     :get-result-value="getResultValue"
     :autoSelect="true"
-    placeholder="ㅊㅅㄱ123 또는 내용 검색"
+    placeholder="검색어를 입력하세요"
     aria-label="Search bible"
     @submit="handleAutocompleteSubmit"
   >
