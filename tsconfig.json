@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "sourceMap": true,
+    "rootDir": "./api",
+    "removeComments": true,
+    "strict": true,
+    "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["api/**/*"],
+  "exclude": ["api/dist/**/*"]
+}

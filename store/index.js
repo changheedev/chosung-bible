@@ -1,26 +1,27 @@
-const Hangul = require("hangul-js");
+const Hangul = require('hangul-js');
 const alphabet = new Map([
-  ["ㄱ", "r"],
-  ["ㄴ", "s"],
-  ["ㄷ", "e"],
-  ["ㄹ", "f"],
-  ["ㅁ", "a"],
-  ["ㅂ", "q"],
-  ["ㅅ", "t"],
-  ["ㅇ", "d"],
-  ["ㅈ", "w"],
-  ["ㅊ", "c"],
-  ["ㅋ", "z"],
-  ["ㅌ", "x"],
-  ["ㅍ", "v"],
-  ["ㅎ", "g"]
+  ['ㄱ', 'r'],
+  ['ㄴ', 's'],
+  ['ㄷ', 'e'],
+  ['ㄹ', 'f'],
+  ['ㅁ', 'a'],
+  ['ㅂ', 'q'],
+  ['ㅅ', 't'],
+  ['ㅇ', 'd'],
+  ['ㅈ', 'w'],
+  ['ㅊ', 'c'],
+  ['ㅋ', 'z'],
+  ['ㅌ', 'x'],
+  ['ㅍ', 'v'],
+  ['ㅎ', 'g']
 ]);
 
 export const state = () => {
   return {
     books: [],
     chosung: {},
-    metadata: {}
+    metadata: {},
+    searchParams: {}
   };
 };
 
@@ -33,6 +34,9 @@ export const mutations = {
   },
   setMetadata(state, metadata) {
     state.metadata = metadata;
+  },
+  setSearchParams(state, searchParams) {
+    state.searchParams = searchParams;
   }
 };
 
@@ -45,6 +49,44 @@ export const getters = {
   },
   metadata(state) {
     return state.metadata;
+  },
+  searchParams(state) {
+    return state.searchParams;
+  },
+  query(state) {
+    let query;
+    const searchParams = state.searchParams;
+    const books = state.books;
+
+    if (!searchParams) return null;
+
+    if (searchParams.type === 'keyword') {
+      if (!searchParams.data.keyword) return null;
+
+      let bookId = 0;
+      if (searchParams.data.book) {
+        books.forEach(item => {
+          if (item.name === searchParams.data.book) {
+            bookId = item.id;
+          }
+        });
+      }
+      query = {
+        type: searchParams.type,
+        keyword: encodeURIComponent(searchParams.data.keyword),
+        book: bookId,
+        page: 0
+      };
+    } else if (searchParams.type === 'meta') {
+      query = {
+        type: searchParams.type,
+        book: searchParams.data.book,
+        chapter: searchParams.data.chapter,
+        verse: searchParams.data.verse,
+        page: 0
+      };
+    } else query = null;
+    return query;
   }
 };
 
@@ -58,8 +100,8 @@ const createChosungMap = books => {
      *return: [['ㅊ','ㅏ','ㅇ'],['ㅅ','ㅔ'],['ㄱ','ㅣ']]
      */
     const disassembled = Hangul.disassemble(book.name, true);
-    let chosung = "";
-    let chosungAlpha = "";
+    let chosung = '';
+    let chosungAlpha = '';
 
     disassembled.forEach(word => {
       //추출한 배열의 각 첫 글자를 합친다 => 'ㅊㅅㄱ'
@@ -81,18 +123,16 @@ const createChosungMap = books => {
 export const actions = {
   async nuxtServerInit({ commit }, { app }) {
     try {
-      const bibleMeta = await app.$axios.get("/api/bible/metadata");
-      commit("setMetadata", bibleMeta);
-      console.log("Load metadata has been established successfully.");
-
-      const books = await app.$axios.get("/api/bible/books");
-      commit("setBooks", books);
+      const { books, metadata } = await app.$axios.get('/api/bible/metadata');
+      commit('setMetadata', metadata);
+      commit('setBooks', books);
+      console.log('Get bible data has been established successfully.');
 
       const chosungMap = createChosungMap(books);
-      commit("setChosung", chosungMap);
-      console.log("Create chosung list has been established successfully.");
+      commit('setChosung', chosungMap);
+      console.log('Create chosung list has been established successfully.');
     } catch (err) {
-      console.error("Store init failed\n", err);
+      console.error('Store init failed\n', err);
     }
   }
 };
