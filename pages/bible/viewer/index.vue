@@ -1,14 +1,14 @@
 <template>
   <section class="container min-vh-100">
     <b-navbar fixed="top" variant="light" type="light" class="shadow-sm">
-      <b-navbar-nav class="nav-show-searchbar" v-if="isShowSearchInput">
+      <b-navbar-nav class="nav-show-searchbar" v-if="showInput">
         <comp-autocomplete class="el-autocomplete" @search="handleSearch"></comp-autocomplete>
-        <b-button variant="transparent" @click="hideSearchInput"><b-icon-x-circle></b-icon-x-circle></b-button>
+        <b-button variant="transparent" @click="hideInput"><b-icon-x-circle></b-icon-x-circle></b-button>
       </b-navbar-nav>
       <b-navbar-nav class="nav-hide-searchbar" v-else>
         <b-navbar-brand to="/"><b-icon-arrow-left font-scale="1.5"></b-icon-arrow-left></b-navbar-brand>
         <b-navbar-nav class="ml-auto">
-          <b-button variant="transparent" @click="showSearchInput"><b-icon-search></b-icon-search></b-button>
+          <b-button variant="transparent" @click="displayInput"><b-icon-search></b-icon-search></b-button>
           <b-button-group>
             <b-button
               class="disable-dbl-tap-zoom"
@@ -26,16 +26,14 @@
       </b-navbar-nav>
     </b-navbar>
 
-    <div class="view-bible-area mt-3" v-if="isViewBible">
+    <div class="view-bible-area mt-3" v-if="existBible">
       <ul class="ul-bible">
-        <li v-for="item in searchedData" :key="'bible_' + item.id">
+        <li v-for="item in bibles" :key="'bible_' + item.id">
           <div class="bible-metadata">
             {{ makeMetadataText(item) }}
           </div>
           <div :style="{ fontSize: fontSize + 'px' }" class="bible-content shadow-sm rounded p-3">
-            <text-highlight :queries="tokenSet" v-if="searchParams.type === 'keyword'">{{
-              item.content
-            }}</text-highlight>
+            <text-highlight :queries="tokenSet" v-if="queries.type === 'keyword'">{{ item.content }}</text-highlight>
             <span v-else>{{ item.content }}</span>
           </div>
         </li>
@@ -51,6 +49,8 @@
 <script>
 import { BIconArrowLeft, BIconPlus, BIconDash, BIconSearch, BIconXCircle } from 'bootstrap-vue';
 import CompAutocomplete from '~/components/CompAutocomplete';
+import SearchHistory from '~/utils/search-history';
+
 export default {
   components: {
     BIconArrowLeft,
@@ -62,25 +62,24 @@ export default {
   },
   asyncData({ query, store }) {
     const books = store.getters.books;
-    const searchParams = query;
-    searchParams.page = query.page || 0;
+    const queries = query;
 
     return {
       books: books,
-      searchParams: searchParams
+      queries: queries
     };
   },
   data() {
     return {
-      searchedData: [],
+      bibles: [],
       message: '검색 중입니다...',
       fontSize: 16,
-      isShowSearchInput: false
+      showInput: false
     };
   },
   computed: {
-    isViewBible() {
-      if (this.searchedData.length > 0) return true;
+    existBible() {
+      if (this.bibles.length > 0) return true;
       return false;
     },
     disableDecFontSize() {
@@ -89,9 +88,9 @@ export default {
     },
     tokenSet() {
       let tokenSet = [];
-      if (this.searchParams.type !== 'keyword') return tokenSet;
+      if (this.queries.type !== 'keyword') return tokenSet;
 
-      const keyword = decodeURIComponent(this.searchParams.keyword);
+      const keyword = decodeURIComponent(this.queries.keyword);
 
       const keywordTokens = keyword.split(' ');
 
@@ -110,19 +109,24 @@ export default {
     }
   },
   mounted() {
-    this.getBible(this.searchParams);
+    this.getBible(this.queries);
   },
   methods: {
-    async getBible(searchParams) {
+    async getBible(queries) {
       try {
         let bible;
-        if (searchParams.type === 'keyword') {
-          if (!searchParams.keyword) throw new Error('Keyword is null');
-          bible = await this.getBibleByKeyword(searchParams);
-        } else bible = await this.getBibleByMeta(searchParams);
+        if (queries.type === 'keyword') {
+          bible = await this.getBibleByKeyword(queries);
+        } else bible = await this.getBibleByMeta(queries);
 
         if (bible.length == 0) this.message = '검색 결과가 없습니다.';
-        this.searchedData = this.searchedData.concat(bible);
+        else {
+          this.bibles = this.bibles.concat(bible);
+          //검색에 성공한 경우 검색히스토리 저장
+          const searchParams = this.$store.getters.searchParams;
+          SearchHistory.saveSearchHistory(searchParams);
+        }
+        return bible;
       } catch (err) {
         this.message = '검색 과정에서 오류가 발생했습니다.';
       }
@@ -143,9 +147,19 @@ export default {
         }
       });
     },
-    getBibleNextPage() {
-      this.searchParams.page = this.searchParams.page + 1;
-      this.getBible(this.searchParams);
+    async getBibleNextPage() {
+      this.queries.page = this.queries.page + 1;
+      const result = await this.getBible(this.queries);
+      if (result.length === 0) alert('마지막 페이지 입니다');
+    },
+    async handleSearch(searchParams) {
+      this.hideInput();
+      this.bibles.splice(0); //clear prev list
+      this.$store.commit('setSearchParams', searchParams);
+      this.queries = this.$store.getters.query;
+      if (!this.queries) alert('입력이 올바르지 않습니다.');
+      await this.getBible(this.queries);
+      this.$router.push({ path: '/bible/viewer', query: this.queries });
     },
     makeMetadataText(item) {
       return `${this.books[item.book - 1].name} ${item.chapter}${item.book === 19 ? '편' : '장'} ${item.verse}절`;
@@ -156,17 +170,11 @@ export default {
     increaseFontSize() {
       this.fontSize++;
     },
-    handleSearch(query) {
-      this.hideSearchInput();
-      this.searchedData = [];
-      this.searchParams = query;
-      this.getBible(this.searchParams);
+    displayInput() {
+      this.showInput = true;
     },
-    showSearchInput() {
-      this.isShowSearchInput = true;
-    },
-    hideSearchInput() {
-      this.isShowSearchInput = false;
+    hideInput() {
+      this.showInput = false;
     }
   }
 };

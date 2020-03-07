@@ -20,7 +20,8 @@ export const state = () => {
   return {
     books: [],
     chosung: {},
-    metadata: {}
+    metadata: {},
+    searchParams: {}
   };
 };
 
@@ -33,6 +34,9 @@ export const mutations = {
   },
   setMetadata(state, metadata) {
     state.metadata = metadata;
+  },
+  setSearchParams(state, searchParams) {
+    state.searchParams = searchParams;
   }
 };
 
@@ -45,6 +49,44 @@ export const getters = {
   },
   metadata(state) {
     return state.metadata;
+  },
+  searchParams(state) {
+    return state.searchParams;
+  },
+  query(state) {
+    let query;
+    const searchParams = state.searchParams;
+    const books = state.books;
+
+    if (!searchParams) return null;
+
+    if (searchParams.type === 'keyword') {
+      if (!searchParams.data.keyword) return null;
+
+      let bookId = 0;
+      if (searchParams.data.book) {
+        books.forEach(item => {
+          if (item.name === searchParams.data.book) {
+            bookId = item.id;
+          }
+        });
+      }
+      query = {
+        type: searchParams.type,
+        keyword: encodeURIComponent(searchParams.data.keyword),
+        book: bookId,
+        page: 0
+      };
+    } else if (searchParams.type === 'meta') {
+      query = {
+        type: searchParams.type,
+        book: searchParams.data.book,
+        chapter: searchParams.data.chapter,
+        verse: searchParams.data.verse,
+        page: 0
+      };
+    } else query = null;
+    return query;
   }
 };
 

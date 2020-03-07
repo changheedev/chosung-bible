@@ -47,37 +47,7 @@ export default {
       if (!result) {
         return;
       }
-      SearchHistory.saveSearchHistory(result);
-
-      let query = {};
-
-      if (result.type === 'keyword') {
-        let bookId = 0;
-
-        if (result.data.book) {
-          bookId = this.books.reduce((id, item) => {
-            if (item.name === result.data.book) {
-              id = item.id;
-            }
-            return id;
-          }, 0);
-        }
-
-        query = {
-          type: result.type,
-          keyword: encodeURIComponent(result.data.keyword),
-          book: bookId
-        };
-      } else {
-        query = {
-          type: result.type,
-          book: result.data.book,
-          chapter: result.data.chapter,
-          verse: result.data.verse
-        };
-      }
-      query.page = 0;
-      this.$emit('search', query);
+      this.$emit('search', result);      
     },
     search(input) {
       const _input = input.trim();
