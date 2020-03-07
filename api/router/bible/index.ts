@@ -49,7 +49,7 @@ router.get('', async (req, res, next) => {
 
     const result = await BibleService.searchBibleByKeyword(keyword, book, page);
 
-    LogQueue.insertLog(req.useragent, { keyword: keyword, page: page });
+    LogQueue.insertLog(req.useragent, { keyword: keyword, book: book, page: page });
     res.status(200).json(result);
   } catch (err) {
     next(err);
