@@ -1,4 +1,4 @@
-import Review from '../../database/mongodb/models/Review';
+import Review from '../../database/mongoose/models/Review';
 import UserAgent from '../../models/UserAgent';
 import { Details } from 'express-useragent';
 

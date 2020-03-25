@@ -1,5 +1,4 @@
-import mongoose from '../index';
-import { Schema } from 'mongoose';
+import { Schema, model } from 'mongoose';
 
 const ErrorLogSchema = new Schema({
   useragent: { type: Map, of: String },
@@ -8,4 +7,4 @@ const ErrorLogSchema = new Schema({
   date: { type: Date, default: Date.now }
 });
 
-export default mongoose.model('ErrorLog', ErrorLogSchema);
+export default model('ErrorLog', ErrorLogSchema);

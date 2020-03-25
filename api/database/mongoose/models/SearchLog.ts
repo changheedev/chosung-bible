@@ -1,5 +1,4 @@
-import mongoose from '../index';
-import { Schema } from 'mongoose';
+import { Schema, model } from 'mongoose';
 
 const SearchLogSchema = new Schema({
   useragent: { type: Map, of: String },
@@ -7,4 +6,4 @@ const SearchLogSchema = new Schema({
   date: Date
 });
 
-export default mongoose.model('SearchLog', SearchLogSchema);
+export default model('SearchLog', SearchLogSchema);
