@@ -51,6 +51,10 @@ export default class SequelizeDatabase {
           },
           name: {
             type: DataTypes.STRING
+          },
+          shortName: {
+            field: 'short_name',
+            type: DataTypes.STRING
           }
         },
         {
