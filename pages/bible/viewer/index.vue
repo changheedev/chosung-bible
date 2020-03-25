@@ -1,29 +1,16 @@
 <template>
   <section class="container min-vh-100">
     <b-navbar fixed="top" variant="light" type="light" class="shadow-sm">
-      <b-navbar-nav class="nav-show-searchbar" v-if="showInput">
-        <comp-autocomplete class="el-autocomplete" @search="handleSearch"></comp-autocomplete>
-        <b-button variant="transparent" @click="hideInput"><b-icon-x-circle></b-icon-x-circle></b-button>
-      </b-navbar-nav>
-      <b-navbar-nav class="nav-hide-searchbar" v-else>
-        <b-navbar-brand to="/"><b-icon-arrow-left font-scale="1.5"></b-icon-arrow-left></b-navbar-brand>
-        <b-navbar-nav class="ml-auto">
-          <b-button variant="transparent" @click="displayInput"><b-icon-search></b-icon-search></b-button>
-          <b-button-group>
-            <b-button
-              class="disable-dbl-tap-zoom"
-              variant="outline-dark"
-              size="sm"
-              @click="decreaseFontSize"
-              :disabled="disableDecFontSize"
-              ><b-icon-dash></b-icon-dash
-            ></b-button>
-            <b-button class="disable-dbl-tap-zoom" variant="outline-dark" size="sm" @click="increaseFontSize"
-              ><b-icon-plus></b-icon-plus
-            ></b-button>
-          </b-button-group>
-        </b-navbar-nav>
-      </b-navbar-nav>
+      <default-nav
+        @changeNavType="changeNavType"
+        @changeFontSize="changeFontSize"
+        v-if="navType === 'default'"
+      ></default-nav>
+      <search-bar-nav
+        @changeNavType="changeNavType"
+        @search="handleSearch"
+        v-if="navType === 'search'"
+      ></search-bar-nav>
     </b-navbar>
 
     <div class="view-bible-area mt-3" v-if="existBible">
@@ -47,18 +34,14 @@
 </template>
 
 <script>
-import { BIconArrowLeft, BIconPlus, BIconDash, BIconSearch, BIconXCircle } from 'bootstrap-vue';
-import CompAutocomplete from '~/components/CompAutocomplete';
+import DefaultNav from '~/components/BibleViewerDefaultNav';
+import SearchBarNav from '~/components/BibleViewerSearchBarNav';
 import SearchHistory from '~/utils/search-history';
 
 export default {
   components: {
-    BIconArrowLeft,
-    BIconPlus,
-    BIconDash,
-    BIconSearch,
-    BIconXCircle,
-    CompAutocomplete
+    DefaultNav,
+    SearchBarNav
   },
   asyncData({ query, store }) {
     const books = store.getters.books;
@@ -74,17 +57,14 @@ export default {
       bibles: [],
       message: '검색 중입니다...',
       fontSize: 16,
-      showInput: false
+      showInput: false,
+      navType: 'default'
     };
   },
   computed: {
     existBible() {
       if (this.bibles.length > 0) return true;
       return false;
-    },
-    disableDecFontSize() {
-      if (this.fontSize > 16) return false;
-      return true;
     },
     tokenSet() {
       let tokenSet = [];
@@ -153,7 +133,7 @@ export default {
       if (result.length === 0) alert('마지막 페이지 입니다');
     },
     async handleSearch(searchParams) {
-      this.hideInput();
+      this.navType = 'default';
       this.bibles.splice(0); //clear prev list
       this.$store.commit('setSearchParams', searchParams);
       this.queries = this.$store.getters.query;
@@ -164,17 +144,11 @@ export default {
     makeMetadataText(item) {
       return `${this.books[item.book - 1].name} ${item.chapter}${item.book === 19 ? '편' : '장'} ${item.verse}절`;
     },
-    decreaseFontSize() {
-      if (this.fontSize > 16) this.fontSize--;
+    changeNavType(type) {
+      this.navType = type;
     },
-    increaseFontSize() {
-      this.fontSize++;
-    },
-    displayInput() {
-      this.showInput = true;
-    },
-    hideInput() {
-      this.showInput = false;
+    changeFontSize(fontSize) {
+      this.fontSize = fontSize;
     }
   }
 };
@@ -211,22 +185,8 @@ export default {
   margin-left: 3px;
   color: #999;
 }
-
-.disable-dbl-tap-zoom {
-  touch-action: manipulation;
-}
 .bible-content {
   line-height: 1.8rem;
-}
-
-.nav-hide-searchbar {
-  width: 100%;
-}
-
-.nav-show-searchbar {
-  width: 100%;
-  max-width: 500px;
-  margin-left: auto;
 }
 
 .el-autocomplete {
