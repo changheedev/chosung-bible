@@ -31,4 +31,7 @@ export default {
   max-width: 500px;
   margin-left: auto;
 }
+.el-autocomplete {
+  width: 100%;
+}
 </style>

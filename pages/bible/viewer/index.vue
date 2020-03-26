@@ -1,11 +1,7 @@
 <template>
   <section class="container min-vh-100">
-    <b-navbar fixed="top" variant="light" type="light" class="shadow-sm">
-      <default-nav
-        @changeNavType="changeNavType"
-        @changeFontSize="changeFontSize"
-        v-if="navType === 'default'"
-      ></default-nav>
+    <b-navbar fixed="top" variant="light" type="light" class="navbar-bible-viewer shadow-sm">
+      <default-nav @changeNavType="changeNavType" v-if="navType === 'default'"></default-nav>
       <search-bar-nav
         @changeNavType="changeNavType"
         @search="handleSearch"
@@ -14,19 +10,25 @@
     </b-navbar>
 
     <div class="view-bible-area mt-3" v-if="existBible">
+      <div class="btn-font-resize">
+        <b-form-spinbutton id="sb-vertical" v-model="fontSize" min="16" vertical></b-form-spinbutton>
+      </div>
       <ul class="ul-bible">
         <li v-for="item in bibles" :key="'bible_' + item.id">
           <div class="bible-metadata">
             {{ makeMetadataText(item) }}
           </div>
-          <div :style="{ fontSize: fontSize + 'px' }" class="bible-content shadow-sm rounded p-3">
-            <text-highlight :queries="tokenSet" v-if="queries.type === 'keyword'">{{ item.content }}</text-highlight>
-            <span v-else>{{ item.content }}</span>
+
+          <div class="bible-content-wrapper shadow-sm rounded p-3">
+            <div :style="{ fontSize: fontSize + 'px' }" class="bible-content ">
+              <text-highlight :queries="tokenSet" v-if="queries.type === 'keyword'">{{ item.content }}</text-highlight>
+              <span v-else>{{ item.content }}</span>
+            </div>
           </div>
         </li>
       </ul>
       <div class="text-center">
-        <b-button class="btn-more mt-5 px-5" variant="primary" @click="getBibleNextPage()">더보기</b-button>
+        <b-button class="btn-more mt-5 px-5" variant="primary" @click="getBibleNextPage">더보기</b-button>
       </div>
     </div>
     <div class="state-message" v-else>{{ message }}</div>
@@ -58,7 +60,8 @@ export default {
       message: '검색 중입니다...',
       fontSize: 16,
       showInput: false,
-      navType: 'default'
+      navType: 'default',
+      selected: new Set()
     };
   },
   computed: {
@@ -146,50 +149,50 @@ export default {
     },
     changeNavType(type) {
       this.navType = type;
-    },
-    changeFontSize(fontSize) {
-      this.fontSize = fontSize;
     }
   }
 };
 </script>
 
-<style scoped>
-.navbar-brand {
-  padding: 0;
-}
-
+<style lang="scss" scoped>
 .container {
-  padding: 76px 20px 50px;
+  padding: 76px 15px 50px;
   width: 100%;
   max-width: 700px;
   min-height: 100vh;
 }
 
-.title {
-  font-size: 1.2rem;
-  margin-bottom: 20px;
-}
-.ul-bible {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
+.view-bible-area {
+  position: relative;
 
-.ul-bible > li + li {
-  margin-top: 25px;
-}
+  .btn-font-resize {
+    position: fixed;
+    bottom: 50px;
+    right: calc((100% - 730px) / 2 - 70px);
 
-.bible-metadata {
-  font-size: 0.8rem;
-  margin-left: 3px;
-  color: #999;
-}
-.bible-content {
-  line-height: 1.8rem;
-}
+    @media (max-width: 850px) {
+      right: 15px;
+    }
+  }
 
-.el-autocomplete {
-  width: 100%;
+  .ul-bible {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    li + li {
+      margin-top: 25px;
+    }
+
+    .bible-metadata {
+      font-size: 0.8rem;
+      margin-left: 3px;
+      color: #999;
+    }
+
+    .bible-content {
+      line-height: 1.8rem;
+    }
+  }
 }
 </style>
