@@ -1,24 +1,22 @@
-import { Sequelize } from 'sequelize';
+import { Sequelize, DataTypes, Op, WhereOptions } from 'sequelize';
+import Book from './models/Book';
+import Bible from './models/Bible';
+import config from '../../config';
 
-class Database {
-  private static instance: Database;
+export { Sequelize, Op, WhereOptions };
+
+export default class SequelizeDatabase {
+  private static instance: SequelizeDatabase;
   private _sequelize!: Sequelize;
 
-  private constructor() {
-    if (
-      !process.env.DB_DATABASE ||
-      !process.env.DB_USERNAME ||
-      !process.env.DB_PASSWORD ||
-      !process.env.DB_HOST ||
-      !process.env.DB_PORT
-    )
-      throw new Error('Not exist sequelize config');
-
+  constructor() {
     //connect db
-    if (!Database.instance) {
-      this._sequelize = new Sequelize(process.env.DB_DATABASE, process.env.DB_USERNAME, process.env.DB_PASSWORD, {
-        host: process.env.DB_HOST,
-        port: Number(process.env.DB_PORT),
+    if (!SequelizeDatabase.instance) {
+      const configs = config.db.sequelize;
+
+      const sequelize = new Sequelize(configs.database, configs.username, configs.password, {
+        host: configs.host,
+        port: configs.port,
         dialect: 'mariadb',
         dialectOptions: {
           ssl: false,
@@ -31,38 +29,80 @@ class Database {
         }
       });
 
-      Database.instance = this;
+      sequelize
+        .authenticate()
+        .then(() => {
+          console.log('==============================================');
+          console.log('MariaDB connection by sequelize successful');
+          console.log('==============================================');
+        })
+        .catch(err => {
+          console.log('==============================================');
+          console.log('Unable to connect to the database:', err);
+          console.log('==============================================');
+        });
+
+      Book.init(
+        {
+          // attributes
+          id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true
+          },
+          name: {
+            type: DataTypes.STRING
+          },
+          shortName: {
+            field: 'short_name',
+            type: DataTypes.STRING
+          }
+        },
+        {
+          sequelize,
+          modelName: 'book',
+          tableName: 'tbl_book'
+        }
+      );
+
+      Bible.init(
+        {
+          // attributes
+          id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true
+          },
+          book: {
+            type: DataTypes.INTEGER
+          },
+          chapter: {
+            type: DataTypes.INTEGER
+          },
+          verse: {
+            type: DataTypes.INTEGER
+          },
+          content: {
+            type: DataTypes.TEXT
+          }
+        },
+        {
+          sequelize,
+          modelName: 'bible',
+          tableName: 'tbl_bible'
+        }
+      );
+
+      this._sequelize = sequelize;
+      SequelizeDatabase.instance = this;
     }
 
-    return Database.instance;
+    return SequelizeDatabase.instance;
   }
 
-  testConnect() {
-    //db con test
-    this._sequelize
-      .authenticate()
-      .then(() => {
-        console.log('==============================================');
-        console.log('MariaDB connection by sequelize successful');
-        console.log('==============================================');
-      })
-      .catch(err => {
-        console.log('==============================================');
-        console.log('Unable to connect to the database:');
-        console.log('==============================================');
-      });
+  disconnect(): Promise<void> {
+    return this._sequelize.close();
   }
 
-  static getInstance() {
-    return new Database();
-  }
-
-  get sequelize() {
+  get database() {
     return this._sequelize;
   }
 }
-
-const database = Database.getInstance();
-database.testConnect();
-
-export default database.sequelize;

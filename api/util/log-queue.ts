@@ -1,4 +1,4 @@
-import SearchLog from '../database/mongodb/models/SearchLog';
+import SearchLog from '../database/mongoose/models/SearchLog';
 import Queue from './queue';
 import UserAgent from '../models/UserAgent';
 import { Details } from 'express-useragent';

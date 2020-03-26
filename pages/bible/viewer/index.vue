@@ -1,45 +1,36 @@
 <template>
   <section class="container min-vh-100">
-    <b-navbar fixed="top" variant="light" type="light" class="shadow-sm">
-      <b-navbar-nav class="nav-show-searchbar" v-if="showInput">
-        <comp-autocomplete class="el-autocomplete" @search="handleSearch"></comp-autocomplete>
-        <b-button variant="transparent" @click="hideInput"><b-icon-x-circle></b-icon-x-circle></b-button>
-      </b-navbar-nav>
-      <b-navbar-nav class="nav-hide-searchbar" v-else>
-        <b-navbar-brand to="/"><b-icon-arrow-left font-scale="1.5"></b-icon-arrow-left></b-navbar-brand>
-        <b-navbar-nav class="ml-auto">
-          <b-button variant="transparent" @click="displayInput"><b-icon-search></b-icon-search></b-button>
-          <b-button-group>
-            <b-button
-              class="disable-dbl-tap-zoom"
-              variant="outline-dark"
-              size="sm"
-              @click="decreaseFontSize"
-              :disabled="disableDecFontSize"
-              ><b-icon-dash></b-icon-dash
-            ></b-button>
-            <b-button class="disable-dbl-tap-zoom" variant="outline-dark" size="sm" @click="increaseFontSize"
-              ><b-icon-plus></b-icon-plus
-            ></b-button>
-          </b-button-group>
-        </b-navbar-nav>
-      </b-navbar-nav>
+    <b-navbar fixed="top" variant="light" type="light" class="navbar-bible-viewer shadow-sm">
+      <default-nav @changeNavType="changeNavType" v-if="isDefaultMode"></default-nav>
+      <search-bar-nav @changeNavType="changeNavType" @search="handleSearch" v-if="isSearchMode"></search-bar-nav>
+      <select-nav :selected="countSelected" @cancel="clearSelected" @copy="copy" v-if="isSelectMode"></select-nav>
     </b-navbar>
 
     <div class="view-bible-area mt-3" v-if="existBible">
+      <div class="btn-font-resize">
+        <b-form-spinbutton id="sb-vertical" v-model="fontSize" min="16" vertical></b-form-spinbutton>
+      </div>
       <ul class="ul-bible">
-        <li v-for="item in bibles" :key="'bible_' + item.id">
-          <div class="bible-metadata">
-            {{ makeMetadataText(item) }}
-          </div>
-          <div :style="{ fontSize: fontSize + 'px' }" class="bible-content shadow-sm rounded p-3">
-            <text-highlight :queries="tokenSet" v-if="queries.type === 'keyword'">{{ item.content }}</text-highlight>
-            <span v-else>{{ item.content }}</span>
-          </div>
+        <li v-for="(item, index) in bibles" :key="'bible_' + item.id">
+          <checkbox-content
+            :books="books"
+            :bible="item"
+            :fontSize="fontSize"
+            :tokenSet="tokenSet"
+            v-if="isSelectMode"
+            @change="value => updateSelected(value, index)"
+          ></checkbox-content>
+          <default-content
+            :books="books"
+            :bible="item"
+            :fontSize="fontSize"
+            :tokenSet="tokenSet"
+            v-else
+          ></default-content>
         </li>
       </ul>
       <div class="text-center">
-        <b-button class="btn-more mt-5 px-5" variant="primary" @click="getBibleNextPage()">더보기</b-button>
+        <b-button class="btn-more mt-5 px-5" variant="primary" @click="getBibleNextPage">더보기</b-button>
       </div>
     </div>
     <div class="state-message" v-else>{{ message }}</div>
@@ -47,18 +38,20 @@
 </template>
 
 <script>
-import { BIconArrowLeft, BIconPlus, BIconDash, BIconSearch, BIconXCircle } from 'bootstrap-vue';
-import CompAutocomplete from '~/components/CompAutocomplete';
+import DefaultNav from '~/components/viewer/nav/DefaultNav';
+import SearchBarNav from '~/components/viewer/nav/SearchBarNav';
+import SelectNav from '~/components/viewer/nav/SelectNav';
 import SearchHistory from '~/utils/search-history';
+import DefaultContent from '~/components/viewer/content/DefaultContent';
+import CheckboxContent from '~/components/viewer/content/CheckboxContent';
 
 export default {
   components: {
-    BIconArrowLeft,
-    BIconPlus,
-    BIconDash,
-    BIconSearch,
-    BIconXCircle,
-    CompAutocomplete
+    DefaultNav,
+    SearchBarNav,
+    SelectNav,
+    DefaultContent,
+    CheckboxContent
   },
   asyncData({ query, store }) {
     const books = store.getters.books;
@@ -74,17 +67,16 @@ export default {
       bibles: [],
       message: '검색 중입니다...',
       fontSize: 16,
-      showInput: false
+      showInput: false,
+      navType: 'default',
+      selected: new Set(),
+      countSelected: 0
     };
   },
   computed: {
     existBible() {
       if (this.bibles.length > 0) return true;
       return false;
-    },
-    disableDecFontSize() {
-      if (this.fontSize > 16) return false;
-      return true;
     },
     tokenSet() {
       let tokenSet = [];
@@ -106,6 +98,18 @@ export default {
           }
         });
       return tokenSet;
+    },
+    isDefaultMode() {
+      if (this.navType === 'default') return true;
+      return false;
+    },
+    isSearchMode() {
+      if (this.navType === 'search') return true;
+      return false;
+    },
+    isSelectMode() {
+      if (this.navType === 'select') return true;
+      return false;
     }
   },
   mounted() {
@@ -153,7 +157,7 @@ export default {
       if (result.length === 0) alert('마지막 페이지 입니다');
     },
     async handleSearch(searchParams) {
-      this.hideInput();
+      this.navType = 'default';
       this.bibles.splice(0); //clear prev list
       this.$store.commit('setSearchParams', searchParams);
       this.queries = this.$store.getters.query;
@@ -161,75 +165,86 @@ export default {
       await this.getBible(this.queries);
       this.$router.push({ path: '/bible/viewer', query: this.queries });
     },
-    makeMetadataText(item) {
-      return `${this.books[item.book - 1].name} ${item.chapter}${item.book === 19 ? '편' : '장'} ${item.verse}절`;
+    changeNavType(type) {
+      this.navType = type;
     },
-    decreaseFontSize() {
-      if (this.fontSize > 16) this.fontSize--;
+    updateSelected(checked, index) {
+      if (checked) {
+        this.selected.add(index);
+        ++this.countSelected;
+      } else {
+        this.selected.delete(index);
+        --this.countSelected;
+      }
     },
-    increaseFontSize() {
-      this.fontSize++;
+    clearSelected() {
+      this.selected.clear();
+      this.countSelected = 0;
+      this.changeNavType('default');
     },
-    displayInput() {
-      this.showInput = true;
+    transSelectedToContent() {
+      const selectedIndexArray = Array.from(this.selected);
+      selectedIndexArray.sort();
+
+      const transToContentList = selectedIndexArray.reduce((transToContentList, selectedIndex) => {
+        const selectedBible = this.bibles[selectedIndex];
+        const content = `${selectedBible.content} (${this.books[selectedBible.book - 1].shortName} ${
+          selectedBible.chapter
+        }:${selectedBible.verse})`;
+        transToContentList.push(content);
+        return transToContentList;
+      }, []);
+
+      return transToContentList.join('\n\n');
     },
-    hideInput() {
-      this.showInput = false;
+    copy() {
+      const copyContent = this.transSelectedToContent();
+      this.copyToClipboard(copyContent);
+      this.clearSelected();
+    },
+    copyToClipboard(content) {
+      const textarea = document.createElement('textarea');
+      document.body.appendChild(textarea);
+      textarea.value = content;
+      textarea.select();
+      textarea.setSelectionRange(0, 99999); /*For mobile devices*/
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      alert('복사되었습니다.');
     }
   }
 };
 </script>
 
-<style scoped>
-.navbar-brand {
-  padding: 0;
-}
-
+<style lang="scss" scoped>
 .container {
-  padding: 76px 20px 50px;
+  padding: 76px 15px 50px;
   width: 100%;
   max-width: 700px;
   min-height: 100vh;
 }
 
-.title {
-  font-size: 1.2rem;
-  margin-bottom: 20px;
-}
-.ul-bible {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
+.view-bible-area {
+  position: relative;
 
-.ul-bible > li + li {
-  margin-top: 25px;
-}
+  .btn-font-resize {
+    position: fixed;
+    bottom: 50px;
+    right: calc((100% - 730px) / 2 - 70px);
+    z-index: 100;
+    @media (max-width: 850px) {
+      right: 15px;
+    }
+  }
 
-.bible-metadata {
-  font-size: 0.8rem;
-  margin-left: 3px;
-  color: #999;
-}
+  .ul-bible {
+    list-style: none;
+    margin: 0;
+    padding: 0;
 
-.disable-dbl-tap-zoom {
-  touch-action: manipulation;
-}
-.bible-content {
-  line-height: 1.8rem;
-}
-
-.nav-hide-searchbar {
-  width: 100%;
-}
-
-.nav-show-searchbar {
-  width: 100%;
-  max-width: 500px;
-  margin-left: auto;
-}
-
-.el-autocomplete {
-  width: 100%;
+    li + li {
+      margin-top: 25px;
+    }
+  }
 }
 </style>

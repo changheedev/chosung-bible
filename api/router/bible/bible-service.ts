@@ -1,7 +1,8 @@
-import { Sequelize, Op, WhereOptions } from 'sequelize';
-import database from '../../database/sequelize';
+import DB, { Sequelize, Op, WhereOptions } from '../../database/sequelize';
 import Bible from '../../database/sequelize/models/Bible';
 import Book from '../../database/sequelize/models/Book';
+
+const database = new DB().database;
 
 interface BibleMetadata {
   book: number;

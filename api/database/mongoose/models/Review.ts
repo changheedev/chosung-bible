@@ -1,5 +1,4 @@
-import mongoose from '../index';
-import { Schema } from 'mongoose';
+import { Schema, model } from 'mongoose';
 
 const ReviewSchema = new Schema({
   useragent: { type: Map, of: String },
@@ -7,4 +6,4 @@ const ReviewSchema = new Schema({
   date: { type: Date, default: Date.now }
 });
 
-export default mongoose.model('Review', ReviewSchema);
+export default model('Review', ReviewSchema);
