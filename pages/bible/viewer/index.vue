@@ -7,6 +7,7 @@
         @search="handleSearch"
         v-if="navType === 'search'"
       ></search-bar-nav>
+      <select-nav @changeNavType="changeNavType" @copy="copy" v-if="navType === 'select'"></select-nav>
     </b-navbar>
 
     <div class="view-bible-area mt-3" v-if="existBible">
@@ -14,17 +15,22 @@
         <b-form-spinbutton id="sb-vertical" v-model="fontSize" min="16" vertical></b-form-spinbutton>
       </div>
       <ul class="ul-bible">
-        <li v-for="item in bibles" :key="'bible_' + item.id">
-          <div class="bible-metadata">
-            {{ makeMetadataText(item) }}
-          </div>
-
-          <div class="bible-content-wrapper shadow-sm rounded p-3">
-            <div :style="{ fontSize: fontSize + 'px' }" class="bible-content ">
-              <text-highlight :queries="tokenSet" v-if="queries.type === 'keyword'">{{ item.content }}</text-highlight>
-              <span v-else>{{ item.content }}</span>
-            </div>
-          </div>
+        <li v-for="(item, index) in bibles" :key="'bible_' + item.id">
+          <checkbox-content
+            :books="books"
+            :bible="item"
+            :fontSize="fontSize"
+            :tokenSet="tokenSet"
+            v-if="isSelectMode"
+            @change="updateSelected(item, index)"
+          ></checkbox-content>
+          <default-content
+            :books="books"
+            :bible="item"
+            :fontSize="fontSize"
+            :tokenSet="tokenSet"
+            v-else
+          ></default-content>
         </li>
       </ul>
       <div class="text-center">
@@ -36,14 +42,20 @@
 </template>
 
 <script>
-import DefaultNav from '~/components/BibleViewerDefaultNav';
-import SearchBarNav from '~/components/BibleViewerSearchBarNav';
+import DefaultNav from '~/components/viewer/nav/DefaultNav';
+import SearchBarNav from '~/components/viewer/nav/SearchBarNav';
+import SelectNav from '~/components/viewer/nav/SelectNav';
 import SearchHistory from '~/utils/search-history';
+import DefaultContent from '~/components/viewer/content/DefaultContent';
+import CheckboxContent from '~/components/viewer/content/CheckboxContent';
 
 export default {
   components: {
     DefaultNav,
-    SearchBarNav
+    SearchBarNav,
+    SelectNav,
+    DefaultContent,
+    CheckboxContent
   },
   asyncData({ query, store }) {
     const books = store.getters.books;
@@ -89,6 +101,10 @@ export default {
           }
         });
       return tokenSet;
+    },
+    isSelectMode() {
+      if (this.navType === 'select') return true;
+      return false;
     }
   },
   mounted() {
@@ -144,11 +160,44 @@ export default {
       await this.getBible(this.queries);
       this.$router.push({ path: '/bible/viewer', query: this.queries });
     },
-    makeMetadataText(item) {
-      return `${this.books[item.book - 1].name} ${item.chapter}${item.book === 19 ? '편' : '장'} ${item.verse}절`;
-    },
     changeNavType(type) {
       this.navType = type;
+    },
+    updateSelected(checked, index) {
+      if (checked) {
+        this.selected.add(index);
+      } else this.selected.delete(index);
+    },
+    transSelectedToContent() {
+      const selectedIndexArray = Array.from(this.selected);
+      selectedIndexArray.sort();
+
+      const transToContentList = selectedIndexArray.reduce((transToContentList, selectedIndex) => {
+        const selectedBible = this.bibles[selectedIndex];
+        const content = `${selectedBible.content} (${this.books[selectedBible.book - 1].shortName} ${
+          selectedBible.chapter
+        }:${selectedBible.verse})`;
+        transToContentList.push(content);
+        return transToContentList;
+      }, []);
+
+      return transToContentList.join('\n\n');
+    },
+    copy() {
+      const copyContent = this.transSelectedToContent();
+      this.copyToClipboard(copyContent);
+      this.selected.clear();
+      this.changeNavType('default');
+    },
+    copyToClipboard(content) {
+      const textarea = document.createElement('textarea');
+      document.body.appendChild(textarea);
+      textarea.value = content;
+      textarea.select();
+      textarea.setSelectionRange(0, 99999); /*For mobile devices*/
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      alert('복사되었습니다.');
     }
   }
 };
@@ -169,7 +218,7 @@ export default {
     position: fixed;
     bottom: 50px;
     right: calc((100% - 730px) / 2 - 70px);
-
+    z-index: 100;
     @media (max-width: 850px) {
       right: 15px;
     }
@@ -182,16 +231,6 @@ export default {
 
     li + li {
       margin-top: 25px;
-    }
-
-    .bible-metadata {
-      font-size: 0.8rem;
-      margin-left: 3px;
-      color: #999;
-    }
-
-    .bible-content {
-      line-height: 1.8rem;
     }
   }
 }
