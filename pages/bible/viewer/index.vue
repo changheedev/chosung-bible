@@ -7,7 +7,12 @@
         @search="handleSearch"
         v-if="navType === 'search'"
       ></search-bar-nav>
-      <select-nav @changeNavType="changeNavType" @copy="copy" v-if="navType === 'select'"></select-nav>
+      <select-nav
+        :selected="countSelected"
+        @cancel="clearSelected"
+        @copy="copy"
+        v-if="navType === 'select'"
+      ></select-nav>
     </b-navbar>
 
     <div class="view-bible-area mt-3" v-if="existBible">
@@ -22,7 +27,7 @@
             :fontSize="fontSize"
             :tokenSet="tokenSet"
             v-if="isSelectMode"
-            @change="updateSelected(item, index)"
+            @change="value => updateSelected(value, index)"
           ></checkbox-content>
           <default-content
             :books="books"
@@ -73,7 +78,8 @@ export default {
       fontSize: 16,
       showInput: false,
       navType: 'default',
-      selected: new Set()
+      selected: new Set(),
+      countSelected: 0
     };
   },
   computed: {
@@ -166,7 +172,16 @@ export default {
     updateSelected(checked, index) {
       if (checked) {
         this.selected.add(index);
-      } else this.selected.delete(index);
+        ++this.countSelected;
+      } else {
+        this.selected.delete(index);
+        --this.countSelected;
+      }
+    },
+    clearSelected() {
+      this.selected.clear();
+      this.countSelected = 0;
+      this.changeNavType('default');
     },
     transSelectedToContent() {
       const selectedIndexArray = Array.from(this.selected);
@@ -186,8 +201,7 @@ export default {
     copy() {
       const copyContent = this.transSelectedToContent();
       this.copyToClipboard(copyContent);
-      this.selected.clear();
-      this.changeNavType('default');
+      this.clearSelected();
     },
     copyToClipboard(content) {
       const textarea = document.createElement('textarea');
