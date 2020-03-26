@@ -1,5 +1,4 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../index';
+import { Model } from 'sequelize';
 
 class Bible extends Model {
   id!: number;
@@ -8,32 +7,4 @@ class Bible extends Model {
   verse!: number;
   content!: string;
 }
-
-Bible.init(
-  {
-    // attributes
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true
-    },
-    book: {
-      type: DataTypes.INTEGER
-    },
-    chapter: {
-      type: DataTypes.INTEGER
-    },
-    verse: {
-      type: DataTypes.INTEGER
-    },
-    content: {
-      type: DataTypes.TEXT
-    }
-  },
-  {
-    sequelize,
-    modelName: 'bible',
-    tableName: 'tbl_bible'
-  }
-);
-
 export default Bible;
