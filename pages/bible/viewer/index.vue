@@ -1,18 +1,9 @@
 <template>
   <section class="container min-vh-100">
     <b-navbar fixed="top" variant="light" type="light" class="navbar-bible-viewer shadow-sm">
-      <default-nav @changeNavType="changeNavType" v-if="navType === 'default'"></default-nav>
-      <search-bar-nav
-        @changeNavType="changeNavType"
-        @search="handleSearch"
-        v-if="navType === 'search'"
-      ></search-bar-nav>
-      <select-nav
-        :selected="countSelected"
-        @cancel="clearSelected"
-        @copy="copy"
-        v-if="navType === 'select'"
-      ></select-nav>
+      <default-nav @changeNavType="changeNavType" v-if="isDefaultMode"></default-nav>
+      <search-bar-nav @changeNavType="changeNavType" @search="handleSearch" v-if="isSearchMode"></search-bar-nav>
+      <select-nav :selected="countSelected" @cancel="clearSelected" @copy="copy" v-if="isSelectMode"></select-nav>
     </b-navbar>
 
     <div class="view-bible-area mt-3" v-if="existBible">
@@ -107,6 +98,14 @@ export default {
           }
         });
       return tokenSet;
+    },
+    isDefaultMode() {
+      if (this.navType === 'default') return true;
+      return false;
+    },
+    isSearchMode() {
+      if (this.navType === 'search') return true;
+      return false;
     },
     isSelectMode() {
       if (this.navType === 'select') return true;
