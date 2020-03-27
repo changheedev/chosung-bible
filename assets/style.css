@@ -1,6 +1,6 @@
 html,
 body {
-  font-family: "Apple SD Gothic Neo", "Malgun Gothic", arial, sans-serif;
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', arial, sans-serif;
   font-size: 16px;
   word-spacing: 1px;
   -ms-text-size-adjust: 100%;
@@ -20,4 +20,18 @@ body {
 *:after {
   box-sizing: border-box;
   margin: 0;
+}
+
+/* remove blue border */
+.btn:focus,
+.btn.focus,
+a:focus,
+div:focus,
+button:focus,
+textarea:focus,
+input:focus,
+.form-control:focus,
+.uneditable-input:focus {
+  box-shadow: none;
+  outline: 0 none;
 }
