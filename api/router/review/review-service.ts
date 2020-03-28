@@ -1,34 +1,23 @@
-import Review from '../../database/mongoose/models/Review';
-import UseragentUtil from '../../util/useragent';
+import { ReviewModel } from '../../database/mongoose/models/Review';
+import UserAgentUtil from '../../util/user-agent';
 import { Details } from 'express-useragent';
 
 class ReviewService {
-  private static _instance: ReviewService;
+  constructor() {}
 
-  private constructor() {
-    if (!ReviewService._instance) {
-      ReviewService._instance = this;
-    }
-    return ReviewService._instance;
-  }
-
-  async createReview(useragentDetail: Details | undefined, content: string) {
+  async createReview(userAgentDetail: Details | undefined, content: string) {
     try {
-      const useragent = UseragentUtil.parseUseragent(useragentDetail);
+      const userAgent = UserAgentUtil.parseUserAgent(userAgentDetail);
       const newReview = {
-        useragent: useragent,
+        userAgent: userAgent,
         content: content
       };
-      await Review.create(newReview);
+      await ReviewModel.create(newReview);
       console.log('Insert review...');
     } catch (err) {
       throw err;
     }
   }
-
-  static getInstance() {
-    return new ReviewService();
-  }
 }
 
-export default ReviewService.getInstance();
+export default new ReviewService();

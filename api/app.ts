@@ -1,6 +1,6 @@
 import express = require('express');
 import bodyParser = require('body-parser');
-import useragent = require('express-useragent');
+import userAgent = require('express-useragent');
 import router from './router';
 import { requestErrorHandler } from './error-handler';
 
@@ -24,8 +24,8 @@ class Application {
     this.app.use(bodyParser.json()); //json 포맷의 데이터를 사용
     this.app.use(bodyParser.urlencoded({ extended: true })); //인코딩 된 데이터 사용
 
-    //useragent parser
-    this.app.use(useragent.express());
+    //userAgent parser
+    this.app.use(userAgent.express());
   }
 
   private setRouter() {
