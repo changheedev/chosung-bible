@@ -1,6 +1,6 @@
 import SearchLog from '../database/mongoose/models/SearchLog';
 import Queue from './queue';
-import UserAgent from '../models/UserAgent';
+import UseragentUtil from './useragent';
 import { Details } from 'express-useragent';
 
 class LogQueue {
@@ -37,11 +37,11 @@ class LogQueue {
     this._timer = null;
   }
 
-  insertLog(ua: Details | undefined, query: Object) {
-    const userAgent = new UserAgent(ua);
+  insertLog(useragentDetail: Details | undefined, query: Object) {
+    const useragent = UseragentUtil.parseUseragent(useragentDetail);
 
     Queue.enqueue({
-      useragent: userAgent.toObject(),
+      useragent: useragent,
       query: query,
       date: Date.now()
     });

@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import ErrorLog from './database/mongoose/models/ErrorLog';
-import UserAgent from './models/UserAgent';
+import useragentUtil from './util/useragent';
 
 export const requestErrorHandler = async (error: any, req: Request, res: Response, next: NextFunction) => {
   try {
-    const ua = req.useragent;
-    const useragent = new UserAgent(ua);
+    const useragentDetail = req.useragent;
+    const useragent = useragentUtil.parseUseragent(useragentDetail);
     const newError = {
-      useragent: useragent.toObject(),
+      useragent: useragent,
       message: error.message,
       stack: error.stack
     };

@@ -1,5 +1,5 @@
 import Review from '../../database/mongoose/models/Review';
-import UserAgent from '../../models/UserAgent';
+import UseragentUtil from '../../util/useragent';
 import { Details } from 'express-useragent';
 
 class ReviewService {
@@ -12,17 +12,17 @@ class ReviewService {
     return ReviewService._instance;
   }
 
-  async createReview(ua: Details | undefined, content: string) {
+  async createReview(useragentDetail: Details | undefined, content: string) {
     try {
-      const useragent = new UserAgent(ua);
+      const useragent = UseragentUtil.parseUseragent(useragentDetail);
       const newReview = {
-        useragent: useragent.toObject(),
+        useragent: useragent,
         content: content
       };
       await Review.create(newReview);
       console.log('Insert review...');
     } catch (err) {
-      throw new Error(err);
+      throw err;
     }
   }
 
