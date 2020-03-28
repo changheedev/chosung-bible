@@ -1,52 +1,57 @@
-import express = require('express');
-import bodyParser = require('body-parser');
-import useragent = require('express-useragent');
-import router from './router';
-import Sequelize from './database/sequelize';
-import Mongoose from './database/mongoose';
+import sequelize, { Sequelize } from './database/sequelize';
+import mongoose, { Mongoose } from './database/mongoose';
+import { application, Express } from './app';
 
 class Server {
-  private static _instance: Server;
-  private _app!: express.Application;
+  private _app!: Express;
   private _sequelize!: Sequelize;
   private _mongoose!: Mongoose;
+  constructor() {}
 
-  constructor() {
+  async start() {
     try {
-      if (!Server._instance) {
-        this._app = express();
-        this.initDatabase();
-        this.initMiddleware();
-        Server._instance = this;
-      }
-      return Server._instance;
+      this.initApp();
+      await this.initDatabase();
     } catch (err) {
-      console.error('Server init failed.', err);
+      console.log('서버를 실행하는 과정에서 오류가 발생했습니다', err);
+      this.stop();
     }
   }
 
-  initDatabase() {
-    this._sequelize = new Sequelize();
-    this._mongoose = new Mongoose();
+  private initApp() {
+    this._app = application.init();
   }
 
-  initMiddleware() {
-    // //bodyParser 사용설정
-    this.app.use(bodyParser.json()); //json 포맷의 데이터를 사용
-    this.app.use(bodyParser.urlencoded({ extended: true })); //인코딩 된 데이터 사용
+  private async initDatabase() {
+    this._sequelize = sequelize.init();
+    await this._sequelize.authenticate();
+    console.log('Maria 데이터베이스가 연결되었습니다');
 
-    //useragent parser
-    this._app.use(useragent.express());
-
-    //router 설정
-    this._app.use(router);
+    this._mongoose = await mongoose.init();
+    console.log('Mongo 데이터베이스가 연결되었습니다');
   }
 
-  get app(): express.Application {
+  async stop() {
+    try {
+      if (this._sequelize) {
+        await this._sequelize.close();
+      }
+      if (this._mongoose) {
+        await this._mongoose.disconnect();
+      }
+    } catch (err) {
+      console.error('서버를 종료하는 과정에서 오류가 발생했습니다', err);
+    } finally {
+      process.exit(0);
+    }
+  }
+
+  get app() {
     return this._app;
   }
 }
 
 const server = new Server();
+server.start();
 
 export default server.app;

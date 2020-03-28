@@ -1,8 +1,8 @@
-import express = require('express');
+import { Router } from 'express';
 import LogQueue from '../../util/log-queue';
 import BibleService from './bible-service';
 
-const router = express.Router();
+const router = Router();
 
 //초기화 데이터 캐시
 let cacheMeta: Object;

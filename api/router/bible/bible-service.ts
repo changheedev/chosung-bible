@@ -1,8 +1,6 @@
-import DB, { Sequelize, Op, WhereOptions } from '../../database/sequelize';
+import { Sequelize, Op, WhereOptions } from '../../database/sequelize';
 import Bible from '../../database/sequelize/models/Bible';
 import Book from '../../database/sequelize/models/Book';
-
-const database = new DB().database;
 
 interface BibleMetadata {
   book: number;
@@ -22,15 +20,7 @@ interface VerseMetadata {
 }
 
 class BibleService {
-  private static instance: BibleService;
-
-  constructor() {
-    if (!BibleService.instance) {
-      BibleService.instance = this;
-    }
-    return BibleService.instance;
-  }
-
+  constructor() {}
   private intergrateMetadata(chapterMeta: ChapterMetadata[], verseMeta: VerseMetadata[]): BibleMetadata[] {
     let bibleMeta: BibleMetadata[] = [];
 
@@ -61,9 +51,11 @@ class BibleService {
     try {
       const [bookList, resultChapter, resultVerse] = await Promise.all([
         Book.findAll(),
-        database.query('select book, max(chapter) as chapters from tbl_bible group by book'),
-        database.query('select book, chapter, count(verse) as verses from tbl_bible group by book, chapter')
+        Bible.sequelize?.query('select book, max(chapter) as chapters from tbl_bible group by book'),
+        Bible.sequelize?.query('select book, chapter, count(verse) as verses from tbl_bible group by book, chapter')
       ]);
+
+      if (!resultChapter || !resultVerse) throw new Error('메타데이터를 불러올 수 없습니다');
 
       const chapterMeta: ChapterMetadata[] = resultChapter[0] as ChapterMetadata[];
       const verseMeta: VerseMetadata[] = resultVerse[0] as VerseMetadata[];
@@ -163,5 +155,4 @@ class BibleService {
   }
 }
 
-const instance = new BibleService();
-export default instance;
+export default new BibleService();
