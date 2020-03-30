@@ -1,16 +1,11 @@
-class Queue {
-  private static _instance: Queue;
-  private queue!: any[];
+export default class Queue<T> {
+  private queue!: T[];
 
-  private constructor() {
-    if (!Queue._instance) {
-      this.queue = [];
-      Queue._instance = this;
-    }
-    return Queue._instance;
+  constructor() {
+    this.queue = [];
   }
 
-  enqueue(element: any) {
+  enqueue(element: T) {
     this.queue.push(element);
   }
 
@@ -27,9 +22,8 @@ class Queue {
     return false;
   }
 
-  static getInstance() {
-    return new Queue();
+  isFull() {
+    if (this.queue.length === 10) return true;
+    return false;
   }
 }
-
-export default Queue.getInstance();

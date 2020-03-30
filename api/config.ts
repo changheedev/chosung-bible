@@ -10,5 +10,8 @@ export default {
     mongoose: {
       url: process.env.MONGO_URI || 'mongodb://username:password@127.0.0.1:13307/bible'
     }
+  },
+  log: {
+    cronRule: process.env.LOG_CRON_RULE || '*/1 * * * *'
   }
 };

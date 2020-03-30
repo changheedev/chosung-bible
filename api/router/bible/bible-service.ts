@@ -1,6 +1,13 @@
+import { Request } from 'express';
+import { Details } from 'express-useragent';
+import { SearchLog, SearchLogModel } from '../../database/mongoose/models/SearchLog';
 import { Sequelize, Op, WhereOptions } from '../../database/sequelize';
 import Bible from '../../database/sequelize/models/Bible';
 import Book from '../../database/sequelize/models/Book';
+import Queue from '../../util/queue';
+import UserAgentUtil from '../../util/user-agent';
+import nodeSchedule = require('node-schedule');
+import config from '../../config';
 
 interface BibleMetadata {
   book: number;
@@ -20,7 +27,43 @@ interface VerseMetadata {
 }
 
 class BibleService {
-  constructor() {}
+  private scheduler!: nodeSchedule.Job;
+  private logQueue!: Queue<SearchLog>;
+
+  constructor() {
+    this.logQueue = new Queue<SearchLog>();
+    this.scheduler = nodeSchedule.scheduleJob('search-log', config.log.cronRule, () => {
+      this.saveLogsToDatabase();
+    });
+  }
+
+  async stopScheduler() {
+    await this.saveLogsToDatabase();
+    if (!this.scheduler) return;
+    this.scheduler.cancel();
+  }
+
+  private insertLog(userAgentDetail: Details | undefined, query: Object) {
+    const userAgent = UserAgentUtil.parseUserAgent(userAgentDetail);
+
+    this.logQueue.enqueue({
+      userAgent: userAgent,
+      query: query,
+      date: Date.now()
+    });
+
+    if (this.logQueue.isFull()) {
+      this.saveLogsToDatabase();
+    }
+  }
+
+  async saveLogsToDatabase() {
+    if (this.logQueue.isEmpty()) return;
+
+    await SearchLogModel.insertMany(this.logQueue.dequeueAll());
+    console.log('insert search logs');
+  }
+
   private intergrateMetadata(chapterMeta: ChapterMetadata[], verseMeta: VerseMetadata[]): BibleMetadata[] {
     let bibleMeta: BibleMetadata[] = [];
 
@@ -63,18 +106,16 @@ class BibleService {
       const bibleMeta = this.intergrateMetadata(chapterMeta, verseMeta);
       return { books: bookList, metadata: bibleMeta };
     } catch (err) {
-      throw new Error(err);
+      throw err;
     }
   }
 
-  private hasNaN(params: number[]) {
-    for (const item of params) {
-      if (Number.isNaN(item)) return true;
-    }
-    return false;
-  }
+  async searchBibleByMeta(req: Request): Promise<Bible[]> {
+    const book = Number(req.params.book);
+    const chapter = Number(req.params.chapter);
+    const verse = Number(req.params.verse);
+    const page = Number(req.query.page || 0);
 
-  async searchBibleByMeta(book: number, chapter: number, verse: number, page: number) {
     if (this.hasNaN([book, chapter, verse, page])) throw new Error('Params must be number');
 
     //사용자가 입력한 성경부터 10개의 데이터를 가져온다
@@ -91,10 +132,52 @@ class BibleService {
         offset: page * 10,
         limit: 10
       });
+      this.insertLog(req.useragent, { book: book, chapter: chapter, verse: verse, page: page });
       return result;
     } catch (err) {
-      throw new Error(err);
+      throw err;
     }
+  }
+
+  async searchBibleByKeyword(req: Request): Promise<Bible[]> {
+    const keyword = decodeURIComponent(req.query.keyword);
+    const book = Number(req.query.book);
+    const page = Number(req.query.page || 0);
+
+    if (this.hasNaN([page])) throw new Error('Page is must be number');
+
+    try {
+      const [whereQuery, orderQuery] = this.makeKeywordQuery(keyword);
+
+      let whereOptions: WhereOptions;
+
+      if (book === 0) {
+        whereOptions = Sequelize.literal(whereQuery);
+      } else {
+        whereOptions = {
+          [Op.and]: [{ book: book }, Sequelize.literal(whereQuery)]
+        };
+      }
+
+      const result = await Bible.findAll({
+        where: whereOptions,
+        order: [Sequelize.literal(orderQuery), ['book', 'ASC'], ['chapter', 'ASC'], ['verse', 'ASC']],
+        offset: page * 10,
+        limit: 10
+      });
+
+      this.insertLog(req.useragent, { keyword: keyword, book: book, page: page });
+      return result;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private hasNaN(params: number[]) {
+    for (const item of params) {
+      if (Number.isNaN(item)) return true;
+    }
+    return false;
   }
 
   private makeKeywordQuery(keyword: string): [string, string] {
@@ -124,34 +207,6 @@ class BibleService {
     }
 
     return [whereQuery, orderQuery];
-  }
-
-  async searchBibleByKeyword(keyword: string, book: number, page: number) {
-    if (this.hasNaN([page])) throw new Error('Page is must be number');
-
-    try {
-      const [whereQuery, orderQuery] = this.makeKeywordQuery(keyword);
-
-      let whereOptions: WhereOptions;
-
-      if (book === 0) {
-        whereOptions = Sequelize.literal(whereQuery);
-      } else {
-        whereOptions = {
-          [Op.and]: [{ book: book }, Sequelize.literal(whereQuery)]
-        };
-      }
-
-      const result = await Bible.findAll({
-        where: whereOptions,
-        order: [Sequelize.literal(orderQuery), ['book', 'ASC'], ['chapter', 'ASC'], ['verse', 'ASC']],
-        offset: page * 10,
-        limit: 10
-      });
-      return result;
-    } catch (err) {
-      throw new Error(err);
-    }
   }
 }
 

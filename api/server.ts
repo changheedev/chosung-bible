@@ -1,17 +1,22 @@
 import sequelize, { Sequelize } from './database/sequelize';
 import mongoose, { Mongoose } from './database/mongoose';
+import schedule = require('node-schedule');
+
 import { application, Express } from './app';
 
 class Server {
   private _app!: Express;
   private _sequelize!: Sequelize;
   private _mongoose!: Mongoose;
+  private exceptionOccured = false;
+
   constructor() {}
 
   async start() {
     try {
       this.initApp();
       await this.initDatabase();
+      this.setExitEventHandler();
     } catch (err) {
       console.log('서버를 실행하는 과정에서 오류가 발생했습니다', err);
       this.stop();
@@ -31,8 +36,34 @@ class Server {
     console.log('Mongo 데이터베이스가 연결되었습니다');
   }
 
+  private setExitEventHandler() {
+    process.on('uncaughtException', err => {
+      this.exceptionOccured = true;
+      server.stop();
+    });
+
+    process.on('SIGINT', () => {
+      server.stop();
+    });
+
+    process.on('exit', code => {
+      if (this.exceptionOccured) console.log('Exception occured');
+      else console.log('Kill signal received');
+      console.log(`exit code : ${code}`);
+    });
+  }
+
+  private cancelJobs() {
+    const jobList = schedule.scheduledJobs;
+    for (const jobName in jobList) {
+      console.log(jobName);
+      schedule.cancelJob(jobName);
+    }
+  }
+
   async stop() {
     try {
+      this.cancelJobs();
       if (this._sequelize) {
         await this._sequelize.close();
       }
