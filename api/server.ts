@@ -56,7 +56,6 @@ class Server {
   private cancelJobs() {
     const jobList = schedule.scheduledJobs;
     for (const jobName in jobList) {
-      console.log(jobName);
       schedule.cancelJob(jobName);
     }
   }

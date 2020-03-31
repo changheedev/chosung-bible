@@ -1,11 +1,11 @@
-version: "3"
+version: '3'
 services:
   mariadb:
     image: kazaoki/mariadb-mroonga:latest
     # image: mariadb:latest
     container_name: mariadb
     restart: always
-    command: ["--ft-min-word-len=2"]
+    command: ['--ft-min-word-len=2', '--default-authentication-plugin=mysql_native_password']
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PW}
     volumes:
@@ -23,3 +23,12 @@ services:
       - ${MONGO_DATA_PATH}:/data/db
     ports:
       - ${MONGO_PORT}:27017
+  redis:
+    image: redis:latest
+    container_name: redis_chosung_bible
+    restart: always
+    volumes:
+      - ${REDIS_CONF_PATH}/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - ${REDIS_PORT}:6379
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']

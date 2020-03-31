@@ -7,6 +7,7 @@ import Book from '../../database/sequelize/models/Book';
 import Queue from '../../util/queue';
 import UserAgentUtil from '../../util/user-agent';
 import nodeSchedule = require('node-schedule');
+import cache from '../../util/redis';
 import config from '../../config';
 
 interface BibleMetadata {
@@ -43,12 +44,13 @@ class BibleService {
     this.scheduler.cancel();
   }
 
-  private insertLog(userAgentDetail: Details | undefined, query: Object) {
+  insertLog(userAgentDetail: Details | undefined, query: Object, type: 'db' | 'cache') {
     const userAgent = UserAgentUtil.parseUserAgent(userAgentDetail);
 
     this.logQueue.enqueue({
       userAgent: userAgent,
       query: query,
+      type: type,
       date: Date.now()
     });
 
@@ -92,6 +94,12 @@ class BibleService {
 
   async getBibleMeta() {
     try {
+      const key = 'metadata';
+      const dataFromCache = await cache.getAsync(key);
+      if (dataFromCache) {
+        return JSON.parse(dataFromCache);
+      }
+
       const [bookList, resultChapter, resultVerse] = await Promise.all([
         Book.findAll(),
         Bible.sequelize?.query('select book, max(chapter) as chapters from tbl_bible group by book'),
@@ -104,7 +112,9 @@ class BibleService {
       const verseMeta: VerseMetadata[] = resultVerse[0] as VerseMetadata[];
 
       const bibleMeta = this.intergrateMetadata(chapterMeta, verseMeta);
-      return { books: bookList, metadata: bibleMeta };
+      const result = { books: bookList, metadata: bibleMeta };
+      cache.set(key, JSON.stringify(result));
+      return result;
     } catch (err) {
       throw err;
     }
@@ -121,6 +131,13 @@ class BibleService {
     //사용자가 입력한 성경부터 10개의 데이터를 가져온다
     //사용자가 입력한 파라미터를 서브쿼리로 이용
     try {
+      const key = req.url;
+      const dataFromCache = await cache.getAsync(key);
+      if (dataFromCache) {
+        this.insertLog(req.useragent, { book: book, chapter: chapter, verse: verse, page: page }, 'cache');
+        return JSON.parse(dataFromCache);
+      }
+
       const result = await Bible.findAll({
         where: {
           id: {
@@ -132,7 +149,9 @@ class BibleService {
         offset: page * 10,
         limit: 10
       });
-      this.insertLog(req.useragent, { book: book, chapter: chapter, verse: verse, page: page });
+
+      cache.set(key, JSON.stringify(result));
+      this.insertLog(req.useragent, { book: book, chapter: chapter, verse: verse, page: page }, 'db');
       return result;
     } catch (err) {
       throw err;
@@ -147,6 +166,14 @@ class BibleService {
     if (this.hasNaN([page])) throw new Error('Page is must be number');
 
     try {
+      const key = `?keyword=${keyword}&book=${book}&page=${page}`;
+
+      const dataFromCache = await cache.getAsync(key);
+      if (dataFromCache) {
+        this.insertLog(req.useragent, { keyword: keyword, book: book, page: page }, 'cache');
+        return JSON.parse(dataFromCache);
+      }
+
       const [whereQuery, orderQuery] = this.makeKeywordQuery(keyword);
 
       let whereOptions: WhereOptions;
@@ -166,7 +193,8 @@ class BibleService {
         limit: 10
       });
 
-      this.insertLog(req.useragent, { keyword: keyword, book: book, page: page });
+      cache.set(key, JSON.stringify(result));
+      this.insertLog(req.useragent, { keyword: keyword, book: book, page: page }, 'db');
       return result;
     } catch (err) {
       throw err;

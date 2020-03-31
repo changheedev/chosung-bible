@@ -9,6 +9,9 @@ export default {
     },
     mongoose: {
       url: process.env.MONGO_URI || 'mongodb://username:password@127.0.0.1:13307/bible'
+    },
+    redis: {
+      port: Number(process.env.REDIS_PORT || 6379)
     }
   },
   log: {
