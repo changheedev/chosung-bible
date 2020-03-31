@@ -123,7 +123,7 @@ export default {
           bible = await this.getBibleByKeyword(queries);
         } else bible = await this.getBibleByMeta(queries);
 
-        if (bible.length == 0) this.message = '검색 결과가 없습니다.';
+        if (bible.length === 0) this.message = '검색 결과가 없습니다.';
         else {
           this.bibles = this.bibles.concat(bible);
           //검색에 성공한 경우 검색히스토리 저장
@@ -133,6 +133,7 @@ export default {
         return bible;
       } catch (err) {
         this.message = '검색 과정에서 오류가 발생했습니다.';
+        console.error(err);
       }
     },
     async getBibleByMeta({ type, book, chapter, verse, page }) {
@@ -152,9 +153,13 @@ export default {
       });
     },
     async getBibleNextPage() {
-      this.queries.page = this.queries.page + 1;
-      const result = await this.getBible(this.queries);
-      if (result.length === 0) alert('마지막 페이지 입니다');
+      try {
+        this.queries.page = Number(this.queries.page) + 1;
+        const result = await this.getBible(this.queries);
+        if (result.length === 0) alert('마지막 페이지 입니다');
+      } catch (err) {
+        console.error(err);
+      }
     },
     async handleSearch(searchParams) {
       this.navType = 'default';

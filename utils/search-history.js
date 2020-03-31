@@ -14,21 +14,21 @@ class SearchHistory {
   getOrDefaultSearchHistory() {
     return JSON.parse(localStorage.getItem('searchHistory')) || new Array();
   }
-  findIndexByMeta(from, meta) {
-    return from.findIndex(
-      item => item.data.book === meta.book && item.data.chapter === meta.chapter && item.data.verse === meta.verse
-    );
-  }
-  findIndexByKeyword(from, keywordData) {
-    return from.findIndex(item => item.data.keyword === keywordData.keyword && item.data.book === keywordData.book);
+  findIndex(from, newHistory) {
+    if (from.length === 0) return -1;
+    return from.findIndex(item => {
+      if (item.type !== newHistory.type) return false;
+      const keys = Object.keys(item.data);
+      return keys.every(
+        key =>
+          item.data.hasOwnProperty(key) &&
+          newHistory.data.hasOwnProperty(key) &&
+          item.data[key] === newHistory.data[key]
+      );
+    });
   }
   removeDuplHistory(histories, newHistory) {
-    let index = 0;
-    if (newHistory.type === 'keyword') {
-      index = this.findIndexByKeyword(histories, newHistory.data);
-    } else {
-      index = this.findIndexByMeta(histories, newHistory.data);
-    }
+    const index = this.findIndex(histories, newHistory);
     //중복된 기록 삭제
     if (index !== -1) {
       histories.splice(index, 1);
@@ -42,6 +42,7 @@ class SearchHistory {
     localStorage.setItem('searchHistory', JSON.stringify(histories));
   }
   saveSearchHistory(newHistory) {
+    if (Object.keys(newHistory).length === 0) return;
     const histories = this.getOrDefaultSearchHistory();
     this.removeDuplHistory(histories, newHistory);
     histories.unshift(newHistory);
