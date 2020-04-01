@@ -1,22 +1,22 @@
-import express = require('express');
-import LogQueue from '../../util/log-queue';
+import { Router, Request, Response, NextFunction } from 'express';
 import BibleService from './bible-service';
+import cache from '../../util/cache';
+import logQueue from '../../util/searchlog-queue';
 
-const router = express.Router();
-
-//초기화 데이터 캐시
-let cacheMeta: Object;
+const router = Router();
 
 /* 성경 리스트와 메타데이터를 가져온다. */
 router.get('/metadata', async (req, res, next) => {
   try {
-    //캐시된 데이터가 있다면 사용
-    if (cacheMeta) {
-      res.status(200).json(cacheMeta);
+    const key = 'metadata';
+    const dataFromCache = await cache.getAsync(key);
+    if (dataFromCache) {
+      res.status(200).json(dataFromCache);
       return;
     }
+
     const metadata = await BibleService.getBibleMeta();
-    cacheMeta = { ...metadata };
+    await cache.setAsync(key, metadata);
     res.status(200).json(metadata);
   } catch (err) {
     next(err);
@@ -24,16 +24,27 @@ router.get('/metadata', async (req, res, next) => {
 });
 
 /* 메타데이터로 성경 검색 */
-router.get('/book/:book/chapter/:chapter/verse/:verse', async (req, res, next) => {
+router.get('/book/:book/chapter/:chapter/verse/:verse', validateMeta, async (req, res, next) => {
   try {
-    const book = Number(req.params.book);
-    const chapter = Number(req.params.chapter);
-    const verse = Number(req.params.verse);
-    const page = Number(req.query.page) || 0;
+    const params = {
+      book: Number(req.params.book),
+      chapter: Number(req.params.chapter),
+      verse: Number(req.params.verse),
+      page: Number(req.query.page || 0)
+    };
 
-    const result = await BibleService.searchBibleByMeta(book, chapter, verse, page);
+    const query = req.url;
 
-    LogQueue.insertLog(req.useragent, { book: book, chapter: chapter, verse: verse, page: page });
+    const dataFromCache = await cache.getAsync(query);
+    if (dataFromCache) {
+      await logQueue.insertLog(req.useragent, query, 'cache');
+      res.status(200).json(dataFromCache);
+      return;
+    }
+
+    const result = await BibleService.searchBibleByMeta(params);
+    await cache.setAsync(query, result);
+    await logQueue.insertLog(req.useragent, query, 'db');
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -41,19 +52,64 @@ router.get('/book/:book/chapter/:chapter/verse/:verse', async (req, res, next) =
 });
 
 /* 키워드 검색, fulltext index */
-router.get('', async (req, res, next) => {
+router.get('/book/:book', validateKeyword, async (req, res, next) => {
   try {
-    const keyword = decodeURIComponent(req.query.keyword);
-    const book = Number(req.query.book);
-    const page = Number(req.query.page);
+    const params = {
+      book: Number(req.params.book),
+      keyword: decodeURIComponent(req.query.keyword),
+      page: Number(req.query.page || 0)
+    };
 
-    const result = await BibleService.searchBibleByKeyword(keyword, book, page);
+    const requestUrl = req.url;
+    const query = decodeURIComponent(requestUrl);
 
-    LogQueue.insertLog(req.useragent, { keyword: keyword, book: book, page: page });
+    const dataFromCache = await cache.getAsync(query);
+    if (dataFromCache) {
+      await logQueue.insertLog(req.useragent, query, 'cache');
+      res.status(200).json(dataFromCache);
+      return;
+    }
+
+    const result = await BibleService.searchBibleByKeyword(params);
+    await cache.setAsync(query, result);
+    await logQueue.insertLog(req.useragent, query, 'db');
     res.status(200).json(result);
   } catch (err) {
     next(err);
   }
 });
+
+function validateMeta(req: Request, res: Response, next: NextFunction) {
+  const book = Number(req.params.book);
+  const chapter = Number(req.params.chapter);
+  const verse = Number(req.params.verse);
+  const page = Number(req.query.page || 0);
+
+  if (
+    Number.isNaN(book) ||
+    Number.isNaN(chapter) ||
+    Number.isNaN(verse) ||
+    Number.isNaN(page) ||
+    book === 0 ||
+    chapter === 0 ||
+    verse === 0
+  ) {
+    next(new Error('parameter가 올바르지 않습니다'));
+    return;
+  }
+  next();
+}
+
+function validateKeyword(req: Request, res: Response, next: NextFunction) {
+  const book = Number(req.params.book);
+  const keyword = req.query.keyword;
+  const page = Number(req.query.page);
+
+  if (!keyword || Number.isNaN(book) || Number.isNaN(page)) {
+    next(new Error('parameter가 올바르지 않습니다'));
+    return;
+  }
+  next();
+}
 
 export default router;

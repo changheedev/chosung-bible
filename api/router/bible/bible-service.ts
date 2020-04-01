@@ -1,8 +1,6 @@
-import DB, { Sequelize, Op, WhereOptions } from '../../database/sequelize';
+import { Sequelize, Op, WhereOptions } from '../../database/sequelize';
 import Bible from '../../database/sequelize/models/Bible';
 import Book from '../../database/sequelize/models/Book';
-
-const database = new DB().database;
 
 interface BibleMetadata {
   book: number;
@@ -22,14 +20,7 @@ interface VerseMetadata {
 }
 
 class BibleService {
-  private static instance: BibleService;
-
-  constructor() {
-    if (!BibleService.instance) {
-      BibleService.instance = this;
-    }
-    return BibleService.instance;
-  }
+  constructor() {}
 
   private intergrateMetadata(chapterMeta: ChapterMetadata[], verseMeta: VerseMetadata[]): BibleMetadata[] {
     let bibleMeta: BibleMetadata[] = [];
@@ -61,30 +52,25 @@ class BibleService {
     try {
       const [bookList, resultChapter, resultVerse] = await Promise.all([
         Book.findAll(),
-        database.query('select book, max(chapter) as chapters from tbl_bible group by book'),
-        database.query('select book, chapter, count(verse) as verses from tbl_bible group by book, chapter')
+        Bible.sequelize?.query('select book, max(chapter) as chapters from tbl_bible group by book'),
+        Bible.sequelize?.query('select book, chapter, count(verse) as verses from tbl_bible group by book, chapter')
       ]);
+
+      if (!resultChapter || !resultVerse) throw new Error('메타데이터를 불러올 수 없습니다');
 
       const chapterMeta: ChapterMetadata[] = resultChapter[0] as ChapterMetadata[];
       const verseMeta: VerseMetadata[] = resultVerse[0] as VerseMetadata[];
 
       const bibleMeta = this.intergrateMetadata(chapterMeta, verseMeta);
-      return { books: bookList, metadata: bibleMeta };
+
+      const result = { books: bookList, metadata: bibleMeta };
+      return result;
     } catch (err) {
-      throw new Error(err);
+      throw err;
     }
   }
 
-  private hasNaN(params: number[]) {
-    for (const item of params) {
-      if (Number.isNaN(item)) return true;
-    }
-    return false;
-  }
-
-  async searchBibleByMeta(book: number, chapter: number, verse: number, page: number) {
-    if (this.hasNaN([book, chapter, verse, page])) throw new Error('Params must be number');
-
+  async searchBibleByMeta(params: { book: number; chapter: number; verse: number; page: number }): Promise<Bible[]> {
     //사용자가 입력한 성경부터 10개의 데이터를 가져온다
     //사용자가 입력한 파라미터를 서브쿼리로 이용
     try {
@@ -92,16 +78,44 @@ class BibleService {
         where: {
           id: {
             [Op.gte]: Sequelize.literal(
-              `(select id from tbl_bible where book = ${book} and chapter = ${chapter} and verse = ${verse})`
+              `(select id from tbl_bible where book = ${params.book} and chapter = ${params.chapter} and verse = ${params.verse})`
             )
           }
         },
-        offset: page * 10,
+        offset: params.page * 10,
         limit: 10
       });
+
       return result;
     } catch (err) {
-      throw new Error(err);
+      throw err;
+    }
+  }
+
+  async searchBibleByKeyword(params: { keyword: string; book: number; page: number }): Promise<Bible[]> {
+    try {
+      const [whereQuery, orderQuery] = this.makeKeywordQuery(params.keyword);
+
+      let whereOptions: WhereOptions;
+
+      if (params.book === 0) {
+        whereOptions = Sequelize.literal(whereQuery);
+      } else {
+        whereOptions = {
+          [Op.and]: [{ book: params.book }, Sequelize.literal(whereQuery)]
+        };
+      }
+
+      const result = await Bible.findAll({
+        where: whereOptions,
+        order: [Sequelize.literal(orderQuery), ['book', 'ASC'], ['chapter', 'ASC'], ['verse', 'ASC']],
+        offset: params.page * 10,
+        limit: 10
+      });
+
+      return result;
+    } catch (err) {
+      throw err;
     }
   }
 
@@ -133,35 +147,6 @@ class BibleService {
 
     return [whereQuery, orderQuery];
   }
-
-  async searchBibleByKeyword(keyword: string, book: number, page: number) {
-    if (this.hasNaN([page])) throw new Error('Page is must be number');
-
-    try {
-      const [whereQuery, orderQuery] = this.makeKeywordQuery(keyword);
-
-      let whereOptions: WhereOptions;
-
-      if (book === 0) {
-        whereOptions = Sequelize.literal(whereQuery);
-      } else {
-        whereOptions = {
-          [Op.and]: [{ book: book }, Sequelize.literal(whereQuery)]
-        };
-      }
-
-      const result = await Bible.findAll({
-        where: whereOptions,
-        order: [Sequelize.literal(orderQuery), ['book', 'ASC'], ['chapter', 'ASC'], ['verse', 'ASC']],
-        offset: page * 10,
-        limit: 10
-      });
-      return result;
-    } catch (err) {
-      throw new Error(err);
-    }
-  }
 }
 
-const instance = new BibleService();
-export default instance;
+export default new BibleService();

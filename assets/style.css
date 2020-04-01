@@ -1,6 +1,6 @@
 html,
 body {
-  font-family: "Apple SD Gothic Neo", "Malgun Gothic", arial, sans-serif;
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', arial, sans-serif;
   font-size: 16px;
   word-spacing: 1px;
   -ms-text-size-adjust: 100%;
@@ -12,7 +12,7 @@ body {
 
 .min-vh-100 {
   /* 정확히 (100vh - footer높이) 에 맞출경우 ios safari 하단 네비게이션에 가려지는 부분이 발생 */
-  min-height: calc(89vh - 85px) !important;
+  min-height: calc(82vh - 85px) !important;
 }
 
 *,
@@ -20,4 +20,18 @@ body {
 *:after {
   box-sizing: border-box;
   margin: 0;
+}
+
+/* remove blue border */
+.btn:focus,
+.btn.focus,
+a:focus,
+div:focus,
+button:focus,
+textarea:focus,
+input:focus,
+.form-control:focus,
+.uneditable-input:focus {
+  box-shadow: none;
+  outline: 0 none;
 }

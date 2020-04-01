@@ -1,10 +1,19 @@
 import { Schema, model } from 'mongoose';
+import { UserAgent, UserAgentSchema } from './user-agent';
 
-const ErrorLogSchema = new Schema({
-  useragent: { type: Map, of: String },
-  message: String,
-  stack: String,
-  date: { type: Date, default: Date.now }
-});
+export interface ErrorLog {
+  userAgent: UserAgent;
+  message: string;
+  stack: string;
+  date: number;
+}
 
-export default model('ErrorLog', ErrorLogSchema);
+const ErrorLogSchema = new Schema(
+  Object.assign(UserAgentSchema, {
+    message: String,
+    stack: String,
+    date: { type: Date, default: Date.now }
+  })
+);
+
+export const ErrorLogModel = model('ErrorLog', ErrorLogSchema);

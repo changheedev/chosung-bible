@@ -1,9 +1,17 @@
 import { Schema, model } from 'mongoose';
+import { UserAgent, UserAgentSchema } from './user-agent';
 
-const ReviewSchema = new Schema({
-  useragent: { type: Map, of: String },
-  content: String,
-  date: { type: Date, default: Date.now }
-});
+export interface Review {
+  userAgent: UserAgent;
+  content: string;
+  date: number;
+}
 
-export default model('Review', ReviewSchema);
+const ReviewSchema = new Schema(
+  Object.assign(UserAgentSchema, {
+    content: String,
+    date: { type: Date, default: Date.now }
+  })
+);
+
+export const ReviewModel = model('Review', ReviewSchema);

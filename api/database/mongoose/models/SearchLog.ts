@@ -1,9 +1,19 @@
 import { Schema, model } from 'mongoose';
+import { UserAgent, UserAgentSchema } from './user-agent';
 
-const SearchLogSchema = new Schema({
-  useragent: { type: Map, of: String },
-  query: { type: Map, of: String },
-  date: Date
-});
+export interface SearchLog {
+  userAgent: UserAgent;
+  query: string;
+  type: string;
+  date: number;
+}
 
-export default model('SearchLog', SearchLogSchema);
+const SearchLogSchema = new Schema(
+  Object.assign(UserAgentSchema, {
+    query: String,
+    type: String,
+    date: Date
+  })
+);
+
+export const SearchLogModel = model('SearchLog', SearchLogSchema);

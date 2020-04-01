@@ -54,39 +54,26 @@ export const getters = {
     return state.searchParams;
   },
   query(state) {
-    let query;
     const searchParams = state.searchParams;
-    const books = state.books;
 
     if (!searchParams) return null;
 
     if (searchParams.type === 'keyword') {
-      if (!searchParams.data.keyword) return null;
-
-      let bookId = 0;
-      if (searchParams.data.book) {
-        books.forEach(item => {
-          if (item.name === searchParams.data.book) {
-            bookId = item.id;
-          }
-        });
-      }
-      query = {
+      return {
         type: searchParams.type,
         keyword: encodeURIComponent(searchParams.data.keyword),
-        book: bookId,
+        book: searchParams.data.book,
         page: 0
       };
     } else if (searchParams.type === 'meta') {
-      query = {
+      return {
         type: searchParams.type,
         book: searchParams.data.book,
         chapter: searchParams.data.chapter,
         verse: searchParams.data.verse,
         page: 0
       };
-    } else query = null;
-    return query;
+    } else return null;
   }
 };
 

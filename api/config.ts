@@ -9,6 +9,17 @@ export default {
     },
     mongoose: {
       url: process.env.MONGO_URI || 'mongodb://username:password@127.0.0.1:13307/bible'
+    },
+    redis: {
+      cache: {
+        port: Number(process.env.REDIS_CACHE_PORT || 6379)
+      },
+      messageQueue: {
+        port: Number(process.env.REDIS_MQ_PORT || 6380)
+      }
     }
+  },
+  log: {
+    cronRule: process.env.LOG_CRON_RULE || '*/1 * * * *'
   }
 };

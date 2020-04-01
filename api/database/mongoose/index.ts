@@ -1,33 +1,26 @@
-import { connect, connection, Connection } from 'mongoose';
+import { connect, Mongoose } from 'mongoose';
 import config from '../../config';
 
-export default class MongooseDatabase {
-  private static instance: MongooseDatabase;
-  private connection!: Connection;
-  constructor() {
-    if (!MongooseDatabase.instance) {
-      const connectUrl = config.db.mongoose.url;
+export { Mongoose };
 
-      //connection
-      connect(connectUrl, {
+class MongooseDatabase {
+  private client!: Mongoose;
+  constructor() {}
+
+  async init(): Promise<Mongoose> {
+    if (!this.client) {
+      const options = config.db.mongoose;
+      this.client = await connect(options.url, {
         useNewUrlParser: true,
         useUnifiedTopology: true
       });
-
-      this.connection = connection;
-      this.connection.on('error', console.error.bind(console, 'Mongodb connection error:'));
-      this.connection.once('open', function() {
-        // we're connected!
-        console.log('=======================================================');
-        console.log('Mongodb connection successful');
-        console.log('=======================================================');
-      });
-      MongooseDatabase.instance = this;
     }
-    return MongooseDatabase.instance;
+    return this.client;
   }
 
-  disconnect(): Promise<void> {
-    return this.connection.close();
+  async close() {
+    await this.client.disconnect();
   }
 }
+
+export default new MongooseDatabase();

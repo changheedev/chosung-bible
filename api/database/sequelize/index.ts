@@ -1,108 +1,60 @@
-import { Sequelize, DataTypes, Op, WhereOptions } from 'sequelize';
-import Book from './models/Book';
-import Bible from './models/Bible';
+import { Sequelize, Op, WhereOptions } from 'sequelize';
 import config from '../../config';
+import fs = require('fs');
+import path = require('path');
 
 export { Sequelize, Op, WhereOptions };
 
-export default class SequelizeDatabase {
-  private static instance: SequelizeDatabase;
-  private _sequelize!: Sequelize;
+interface SequelizeOptions {
+  database: string;
+  username: string;
+  password: string;
+  host: string;
+  port: number;
+}
 
-  constructor() {
-    //connect db
-    if (!SequelizeDatabase.instance) {
-      const configs = config.db.sequelize;
+class SequelizeDatabase {
+  private client!: Sequelize;
 
-      const sequelize = new Sequelize(configs.database, configs.username, configs.password, {
-        host: configs.host,
-        port: configs.port,
-        dialect: 'mariadb',
-        dialectOptions: {
-          ssl: false,
-          charset: 'utf8mb4',
-          collate: 'utf8mb4_unicode_ci',
-          timezone: 'Asia/Seoul'
-        },
-        define: {
-          timestamps: false
-        }
-      });
+  constructor() {}
 
-      sequelize
-        .authenticate()
-        .then(() => {
-          console.log('==============================================');
-          console.log('MariaDB connection by sequelize successful');
-          console.log('==============================================');
-        })
-        .catch(err => {
-          console.log('==============================================');
-          console.log('Unable to connect to the database:', err);
-          console.log('==============================================');
-        });
-
-      Book.init(
-        {
-          // attributes
-          id: {
-            type: DataTypes.INTEGER,
-            primaryKey: true
-          },
-          name: {
-            type: DataTypes.STRING
-          },
-          shortName: {
-            field: 'short_name',
-            type: DataTypes.STRING
-          }
-        },
-        {
-          sequelize,
-          modelName: 'book',
-          tableName: 'tbl_book'
-        }
-      );
-
-      Bible.init(
-        {
-          // attributes
-          id: {
-            type: DataTypes.INTEGER,
-            primaryKey: true
-          },
-          book: {
-            type: DataTypes.INTEGER
-          },
-          chapter: {
-            type: DataTypes.INTEGER
-          },
-          verse: {
-            type: DataTypes.INTEGER
-          },
-          content: {
-            type: DataTypes.TEXT
-          }
-        },
-        {
-          sequelize,
-          modelName: 'bible',
-          tableName: 'tbl_bible'
-        }
-      );
-
-      this._sequelize = sequelize;
-      SequelizeDatabase.instance = this;
+  init(): Sequelize {
+    if (!this.client) {
+      const options = config.db.sequelize;
+      this.client = this.connect(options);
+      this.initModels(this.client);
     }
-
-    return SequelizeDatabase.instance;
+    return this.client;
   }
 
-  disconnect(): Promise<void> {
-    return this._sequelize.close();
+  private connect(options: SequelizeOptions): Sequelize {
+    return new Sequelize(options.database, options.username, options.password, {
+      host: options.host,
+      port: options.port,
+      dialect: 'mariadb',
+      dialectOptions: {
+        ssl: false,
+        charset: 'utf8mb4',
+        collate: 'utf8mb4_unicode_ci',
+        timezone: 'Asia/Seoul'
+      },
+      define: {
+        timestamps: false
+      }
+    });
   }
 
-  get database() {
-    return this._sequelize;
+  private initModels(sequelize: Sequelize): void {
+    const curDir = path.join(__dirname, '/models');
+    fs.readdirSync(curDir).map(file => {
+      const init = require(path.join(curDir, file)).init;
+      init(sequelize);
+    });
+  }
+
+  async close(): Promise<void> {
+    await this.client.close();
   }
 }
+
+export default new SequelizeDatabase();

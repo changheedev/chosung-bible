@@ -14,31 +14,35 @@
 const TrieSearch = require('trie-search');
 const Hangul = require('hangul-js');
 import SearchHistory from '~/utils/search-history';
+import { mapGetters } from 'vuex';
 export default {
   data() {
     return {
       trie: null,
-      metadata: null,
-      books: null
+      bookNameMap: null
     };
+  },
+  computed: {
+    ...mapGetters(['books', 'metadata', 'chosung'])
   },
   mounted() {
     try {
-      this.loadMetadata();
+      this.createBookNameMap();
       this.createTrie();
     } catch (err) {
-      throw new Error('초기 데이터를 로드하는데 실패했습니다.');
+      throw err;
     }
   },
   methods: {
-    loadMetadata() {
-      this.metadata = this.$store.getters.metadata;
-      this.books = this.$store.getters.books;
+    createBookNameMap() {
+      this.bookNameMap = new Map();
+      this.books.forEach(book => {
+        this.bookNameMap.set(book.name, book);
+      });
     },
     createTrie() {
-      const chosungMap = this.$store.getters.chosung;
       this.trie = new TrieSearch('irrelevantForMapMethod');
-      chosungMap.forEach((value, key, mapObject) => this.trie.map(key, value));
+      this.chosung.forEach((value, key, mapObject) => this.trie.map(key, value));
     },
     getResultValue(result) {
       return result.data.text;
@@ -47,7 +51,7 @@ export default {
       if (!result) {
         return;
       }
-      this.$emit('search', result);      
+      this.$emit('search', result);
     },
     search(input) {
       const _input = input.trim();
@@ -74,11 +78,15 @@ export default {
       return [{ type: 'keyword', data: { text: input, keyword: keyword, book: book } }];
     },
     parseKeyword(input) {
-      const [keyword, book] = input.split('>');
-      if (book) {
-        return [keyword.trim(), book.trim()];
+      const [keyword, bookName] = input.split('>');
+      if (!bookName) {
+        return [keyword.trim(), 0];
       }
-      return [keyword.trim(), null];
+      const bookMetadata = this.bookNameMap.get(bookName.trim());
+      if (!bookMetadata) {
+        return [keyword.trim(), 0];
+      }
+      return [keyword.trim(), bookMetadata.id];
     },
     searchByMeta(input) {
       const parsedInput = this.parseInputToChosungAndNum(input);
@@ -214,11 +222,11 @@ export default {
       return numstr.charAt(0) === '0';
     },
     getMaxChapter(book) {
-      const _metadata = this.getBookMetadata(book);
+      const _metadata = this.getBookMetadataById(book);
       return _metadata.chapters;
     },
     getMaxVerse(book, chapter) {
-      const _metadata = this.getBookMetadata(book);
+      const _metadata = this.getBookMetadataById(book);
       return _metadata.verses[chapter - 1];
     },
     isRangeChapter(book, chapter) {
@@ -242,8 +250,8 @@ export default {
       }
       return false;
     },
-    getBookMetadata(book) {
-      return this.metadata[book - 1];
+    getBookMetadataById(bookId) {
+      return this.metadata[bookId - 1];
     },
     findIndexByMeta(from, meta) {
       return from.findIndex(

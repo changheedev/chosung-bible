@@ -6,7 +6,8 @@
     "rootDir": "./api",
     "removeComments": true,
     "strict": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true
   },
   "include": ["api/**/*"],
   "exclude": ["api/dist/**/*"]

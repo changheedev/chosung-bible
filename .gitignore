@@ -11,9 +11,8 @@ static/sw.js
 # Nuxt generate
 dist
 
-# Editor
-.editorconfig
-.eslintrc.js
-
 # Config
 .env
+
+# pm2
+ecosystem.config.js
