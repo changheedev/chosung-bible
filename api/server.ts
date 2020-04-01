@@ -1,7 +1,6 @@
 import sequelize, { Sequelize } from './database/sequelize';
 import mongoose, { Mongoose } from './database/mongoose';
 import schedule = require('node-schedule');
-
 import { application, Express } from './app';
 
 class Server {

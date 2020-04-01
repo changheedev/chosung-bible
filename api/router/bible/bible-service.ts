@@ -1,14 +1,9 @@
 import { Request } from 'express';
-import { Details } from 'express-useragent';
-import { SearchLog, SearchLogModel } from '../../database/mongoose/models/SearchLog';
 import { Sequelize, Op, WhereOptions } from '../../database/sequelize';
 import Bible from '../../database/sequelize/models/Bible';
 import Book from '../../database/sequelize/models/Book';
-import Queue from '../../util/queue';
-import UserAgentUtil from '../../util/user-agent';
-import nodeSchedule = require('node-schedule');
-import cache from '../../util/redis';
-import config from '../../config';
+import cache from '../../util/cache';
+import logQueue from '../../util/searchlog-queue';
 
 interface BibleMetadata {
   book: number;
@@ -28,43 +23,7 @@ interface VerseMetadata {
 }
 
 class BibleService {
-  private scheduler!: nodeSchedule.Job;
-  private logQueue!: Queue<SearchLog>;
-
-  constructor() {
-    this.logQueue = new Queue<SearchLog>();
-    this.scheduler = nodeSchedule.scheduleJob('search-log', config.log.cronRule, () => {
-      this.saveLogsToDatabase();
-    });
-  }
-
-  async stopScheduler() {
-    await this.saveLogsToDatabase();
-    if (!this.scheduler) return;
-    this.scheduler.cancel();
-  }
-
-  insertLog(userAgentDetail: Details | undefined, query: Object, type: 'db' | 'cache') {
-    const userAgent = UserAgentUtil.parseUserAgent(userAgentDetail);
-
-    this.logQueue.enqueue({
-      userAgent: userAgent,
-      query: query,
-      type: type,
-      date: Date.now()
-    });
-
-    if (this.logQueue.isFull()) {
-      this.saveLogsToDatabase();
-    }
-  }
-
-  async saveLogsToDatabase() {
-    if (this.logQueue.isEmpty()) return;
-
-    await SearchLogModel.insertMany(this.logQueue.dequeueAll());
-    console.log('insert search logs');
-  }
+  constructor() {}
 
   private intergrateMetadata(chapterMeta: ChapterMetadata[], verseMeta: VerseMetadata[]): BibleMetadata[] {
     let bibleMeta: BibleMetadata[] = [];
@@ -97,7 +56,7 @@ class BibleService {
       const key = 'metadata';
       const dataFromCache = await cache.getAsync(key);
       if (dataFromCache) {
-        return JSON.parse(dataFromCache);
+        return dataFromCache;
       }
 
       const [bookList, resultChapter, resultVerse] = await Promise.all([
@@ -112,8 +71,10 @@ class BibleService {
       const verseMeta: VerseMetadata[] = resultVerse[0] as VerseMetadata[];
 
       const bibleMeta = this.intergrateMetadata(chapterMeta, verseMeta);
+
       const result = { books: bookList, metadata: bibleMeta };
-      cache.set(key, JSON.stringify(result));
+      await cache.setAsync(key, result);
+
       return result;
     } catch (err) {
       throw err;
@@ -134,8 +95,8 @@ class BibleService {
       const key = req.url;
       const dataFromCache = await cache.getAsync(key);
       if (dataFromCache) {
-        this.insertLog(req.useragent, { book: book, chapter: chapter, verse: verse, page: page }, 'cache');
-        return JSON.parse(dataFromCache);
+        await logQueue.insertLog(req.useragent, { book: book, chapter: chapter, verse: verse, page: page }, 'cache');
+        return dataFromCache;
       }
 
       const result = await Bible.findAll({
@@ -150,8 +111,8 @@ class BibleService {
         limit: 10
       });
 
-      cache.set(key, JSON.stringify(result));
-      this.insertLog(req.useragent, { book: book, chapter: chapter, verse: verse, page: page }, 'db');
+      await cache.setAsync(key, result);
+      await logQueue.insertLog(req.useragent, { book: book, chapter: chapter, verse: verse, page: page }, 'db');
       return result;
     } catch (err) {
       throw err;
@@ -170,8 +131,8 @@ class BibleService {
 
       const dataFromCache = await cache.getAsync(key);
       if (dataFromCache) {
-        this.insertLog(req.useragent, { keyword: keyword, book: book, page: page }, 'cache');
-        return JSON.parse(dataFromCache);
+        await logQueue.insertLog(req.useragent, { keyword: keyword, book: book, page: page }, 'cache');
+        return dataFromCache;
       }
 
       const [whereQuery, orderQuery] = this.makeKeywordQuery(keyword);
@@ -193,8 +154,8 @@ class BibleService {
         limit: 10
       });
 
-      cache.set(key, JSON.stringify(result));
-      this.insertLog(req.useragent, { keyword: keyword, book: book, page: page }, 'db');
+      await cache.setAsync(key, result);
+      await logQueue.insertLog(req.useragent, { keyword: keyword, book: book, page: page }, 'db');
       return result;
     } catch (err) {
       throw err;

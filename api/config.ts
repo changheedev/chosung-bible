@@ -11,7 +11,12 @@ export default {
       url: process.env.MONGO_URI || 'mongodb://username:password@127.0.0.1:13307/bible'
     },
     redis: {
-      port: Number(process.env.REDIS_PORT || 6379)
+      cache: {
+        port: Number(process.env.REDIS_CACHE_PORT || 6379)
+      },
+      messageQueue: {
+        port: Number(process.env.REDIS_MQ_PORT || 6380)
+      }
     }
   },
   log: {

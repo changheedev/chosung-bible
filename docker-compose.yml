@@ -23,12 +23,18 @@ services:
       - ${MONGO_DATA_PATH}:/data/db
     ports:
       - ${MONGO_PORT}:27017
-  redis:
+  redis-cache:
     image: redis:latest
-    container_name: redis_chosung_bible
+    container_name: chosung_bible_cache
     restart: always
     volumes:
       - ${REDIS_CONF_PATH}/redis.conf:/usr/local/etc/redis/redis.conf
     ports:
-      - ${REDIS_PORT}:6379
+      - ${REDIS_CACHE_PORT}:6379
     command: ['redis-server', '/usr/local/etc/redis/redis.conf']
+  redis-mq:
+    image: redis:latest
+    container_name: chosung_bible_mq
+    restart: always
+    ports:
+      - ${REDIS_MQ_PORT}:6379
