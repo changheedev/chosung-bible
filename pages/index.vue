@@ -61,11 +61,7 @@ export default {
   },
   mounted() {
     if (process.client) {
-      try {
-        SearchHistory.updatePrevVersionHistories();
-      } catch (err) {
-        SearchHistory.clearSearchHistory();
-      }
+      SearchHistory.clearPrevVersionHistories();
     }
   },
   methods: {
