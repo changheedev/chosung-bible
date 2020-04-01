@@ -144,10 +144,9 @@ export default {
       });
     },
     async getBibleByKeyword({ type, keyword, book, page }) {
-      return await this.$axios.get('/api/bible', {
+      return await this.$axios.get(`/api/bible/book/${book}`, {
         params: {
           keyword: keyword,
-          book: book,
           page: page
         }
       });

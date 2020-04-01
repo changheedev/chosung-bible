@@ -52,15 +52,16 @@ router.get('/book/:book/chapter/:chapter/verse/:verse', validateMeta, async (req
 });
 
 /* 키워드 검색, fulltext index */
-router.get('', validateKeyword, async (req, res, next) => {
+router.get('/book/:book', validateKeyword, async (req, res, next) => {
   try {
     const params = {
+      book: Number(req.params.book),
       keyword: decodeURIComponent(req.query.keyword),
-      book: Number(req.query.book),
       page: Number(req.query.page || 0)
     };
 
-    const query = `?keyword=${params.keyword}&book=${params.book}&page=${params.page}`;
+    const requestUrl = req.url;
+    const query = decodeURIComponent(requestUrl);
 
     const dataFromCache = await cache.getAsync(query);
     if (dataFromCache) {
@@ -100,8 +101,8 @@ function validateMeta(req: Request, res: Response, next: NextFunction) {
 }
 
 function validateKeyword(req: Request, res: Response, next: NextFunction) {
+  const book = Number(req.params.book);
   const keyword = req.query.keyword;
-  const book = Number(req.query.book);
   const page = Number(req.query.page);
 
   if (!keyword || Number.isNaN(book) || Number.isNaN(page)) {
