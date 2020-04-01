@@ -3,14 +3,14 @@ import { UserAgent, UserAgentSchema } from './user-agent';
 
 export interface SearchLog {
   userAgent: UserAgent;
-  query: Object;
+  query: string;
   type: string;
   date: number;
 }
 
 const SearchLogSchema = new Schema(
   Object.assign(UserAgentSchema, {
-    query: { type: Map, of: String },
+    query: String,
     type: String,
     date: Date
   })
