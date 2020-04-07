@@ -4,7 +4,7 @@
 
 여러번의 선택과 입력이 필요한 기존의 성경 검색 방식의 불편함을 개선하기 위해 초성과 숫자정보를 합친 한줄 입력으로 성경을 검색할 수 있는 서비스 개발
 
-[www.chosungbible.com](www.chosungbible.com)
+[www.chosungbible.com](https://www.chosungbible.com)
 
 <br>
 
